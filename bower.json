@@ -1,0 +1,21 @@
+{
+  "name": "iris-polymer-control-panel",
+  "homepage": "https://github.com/sdk-group/iris-polymer-control-panel",
+  "authors": [
+    "artificial-life <proteus.protocol@gmail.com>"
+  ],
+  "description": "control panel",
+  "main": "iris-controlpanel.html",
+  "moduleType": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "iris-polymer-usercard": "https://github.com/sdk-group/iris-polymer-usercard.git"
+  }
+}

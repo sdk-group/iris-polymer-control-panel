@@ -1,0 +1,144 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iris-polymer-importer/iris-importer.html">
+<link rel="import" href="../../bower_components/iris-polymer-usercard/iris-usercard.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="iris-controlpanel">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+        --paper-card-header-text: {
+          font-size: 12pt;
+          text-align: center;
+          padding: 0;
+          margin: 0;
+        }
+        --paper-card-content: {
+          font-size: 12pt;
+          text-align: center;
+        }
+        --paper-toolbar-height: 80px;
+      }
+      
+      .button-tier paper-button {
+        margin: 10px 20px;
+      }
+      
+      .data-tier > div {
+        width: 50%;
+      }
+      
+      #main-info > div {
+        height: 250px;
+      }
+      
+      #main-info paper-button {
+        background-color: lime;
+      }
+      
+      .data-tier paper-card {
+        width: 100%;
+        height: 30%;
+        margin-bottom: 3%;
+      }
+      
+      .data-tier paper-card paper-button {
+        --paper-button: {
+          @apply(--layout-vertical);
+          @apply(--layout-center-center);
+        }
+        ;
+      }
+      
+      paper-material {
+        padding: 10px 5%;
+      }
+    </style>
+    <section>
+      <paper-toolbar justify='end'>
+        <iris-usercard class="bottom" api="{{api}}"></iris-usercard>
+        <paper-button>Перерыв</paper-button>
+        <paper-button>Завершить работу</paper-button>
+      </paper-toolbar>
+      <paper-material>
+        <div class="button-tier layout horizontal">
+          <paper-button class="flex" raised>Следующий</paper-button>
+          <paper-button class="flex" raised>Список талонов</paper-button>
+        </div>
+      </paper-material>
+
+      <paper-material id="main-info" class="data-tier layout horizontal  around-justified">
+        <div class="layout vertical">
+          <paper-card heading="Вызван:">
+            <div class="card-content">Some content</div>
+          </paper-card>
+          <paper-card heading="Услуга:">
+            <div class="card-content">Some content</div>
+          </paper-card>
+          <paper-card heading="ФИО:">
+            <div class="card-content">Some content</div>
+          </paper-card>
+        </div>
+        <div class="layout vertical">
+          <paper-card heading="Время обслуживания:">
+            <div class="card-content">Some content</div>
+          </paper-card>
+          <paper-card>
+            <div class="card-content">
+              <paper-button>Повтор вызова</paper-button>
+            </div>
+          </paper-card>
+          <paper-card>
+            <div class="card-content">
+              <paper-button>Передать</paper-button>
+            </div>
+          </paper-card>
+        </div>
+      </paper-material>
+
+      <paper-material>
+        <div class="button-tier layout horizontal">
+          <paper-button class="flex" raised>Отложить</paper-button>
+          <paper-button class="flex" raised>Список отложенных</paper-button>
+        </div>
+      </paper-material>
+
+      <paper-material class="data-tier layout horizontal  around-justified">
+        <div class="layout vertical">
+          <paper-card heading="В очереди">
+            <div class="card-content">666</div>
+          </paper-card>
+        </div>
+        <div class="layout vertical">
+          <paper-card heading="Отложено">
+            <div class="card-content">999</div>
+          </paper-card>
+        </div>
+      </paper-material>
+
+    </section>
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+      Polymer({
+        is: 'iris-controlpanel',
+        properties: {
+          api: Object
+        },
+        ready() {
+          console.log('ready', this);
+        }
+      });
+    })();
+  </script>
+
+</dom-module>
