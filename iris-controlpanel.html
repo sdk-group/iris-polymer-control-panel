@@ -1,7 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iris-polymer-importer/iris-importer.html">
 <link rel="import" href="../../bower_components/iris-polymer-usercard/iris-usercard.html">
-<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-material/paper-material.html">
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
@@ -24,7 +23,6 @@
           font-size: 12pt;
           text-align: center;
         }
-        --paper-toolbar-height: 80px;
       }
       
       .button-tier paper-button {
@@ -62,11 +60,11 @@
       }
     </style>
     <section>
-      <paper-toolbar justify='end'>
-        <iris-usercard class="bottom" api="{{api}}"></iris-usercard>
+
+      <iris-usercard api="{{api}}">
         <paper-button>Перерыв</paper-button>
         <paper-button>Завершить работу</paper-button>
-      </paper-toolbar>
+      </iris-usercard>
       <paper-material>
         <div class="button-tier layout horizontal">
           <paper-button class="flex" raised on-click="next">Следующий</paper-button>
@@ -135,12 +133,20 @@
           api: Object
         },
         ready() {
-          this.queue = api.require('queue');
+          this.queue = this.api.require('queue');
           this.request_in_progress = false;
 
-          this.queue.onUpdate((queuedata) => {
-            this.set('inqueue_count', queuedata.status.in_queue);
-            this.set('postponed_count', queuedata.status.postponed);
+          let user = this.api.require('user');
+
+          user.on('user.fields.changed', () => {
+            if (user.isLogged()) {
+              this.queue.on('queue.update', (queuedata) => {
+                this.set('inqueue_count', queuedata.status.in_queue);
+                this.set('postponed_count', queuedata.status.postponed);
+              });
+            } else {
+              then.queue.off('queue.update');
+            }
           });
         },
         next() {
