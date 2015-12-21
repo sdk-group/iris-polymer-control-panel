@@ -69,8 +69,8 @@
       </paper-toolbar>
       <paper-material>
         <div class="button-tier layout horizontal">
-          <paper-button class="flex" raised>Следующий</paper-button>
-          <paper-button class="flex" raised>Список талонов</paper-button>
+          <paper-button class="flex" raised on-click="next">Следующий</paper-button>
+          <paper-button class="flex" raised on-click="list">Список талонов</paper-button>
         </div>
       </paper-material>
 
@@ -92,12 +92,12 @@
           </paper-card>
           <paper-card>
             <div class="card-content">
-              <paper-button>Повтор вызова</paper-button>
+              <paper-button raised on-click="retry">Повтор вызова</paper-button>
             </div>
           </paper-card>
           <paper-card>
             <div class="card-content">
-              <paper-button>Передать</paper-button>
+              <paper-button raised on-click="redirect">Передать</paper-button>
             </div>
           </paper-card>
         </div>
@@ -113,12 +113,12 @@
       <paper-material class="data-tier layout horizontal  around-justified">
         <div class="layout vertical">
           <paper-card heading="В очереди">
-            <div class="card-content">666</div>
+            <div class="card-content">{{inqueue_count}}</div>
           </paper-card>
         </div>
         <div class="layout vertical">
           <paper-card heading="Отложено">
-            <div class="card-content">999</div>
+            <div class="card-content">{{postponed_count}}</div>
           </paper-card>
         </div>
       </paper-material>
@@ -135,7 +135,30 @@
           api: Object
         },
         ready() {
-          console.log('ready', this);
+          this.queue = api.require('queue');
+
+          this.queue.onUpdate((queuedata) => {
+            this.set('inqueue_count', queuedata.status.in_queue);
+            this.set('postponed_count', queuedata.status.postponed);
+          });
+        },
+        next() {
+          let next = this.queue.getNextTicket();
+        },
+        specific(ticket) {
+          let specific = this.queue.getSpecificTicket(ticket);
+        },
+        postpone() {
+
+        },
+        redirect(route) {
+
+        },
+        close() {
+
+        },
+        retry() {
+
         }
       });
     })();
