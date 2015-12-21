@@ -136,6 +136,7 @@
         },
         ready() {
           this.queue = api.require('queue');
+          this.request_in_progress = false;
 
           this.queue.onUpdate((queuedata) => {
             this.set('inqueue_count', queuedata.status.in_queue);
