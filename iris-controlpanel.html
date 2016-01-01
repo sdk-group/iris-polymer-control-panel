@@ -1,14 +1,14 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iris-polymer-importer/iris-importer.html">
-<link rel="import" href="../../bower_components/iris-polymer-usercard/iris-usercard.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-material/paper-material.html">
-<link rel="import" href="../../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../../bower_components/iris-polymer-queuelist/iris-queuelist.html">
 
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../bower_components/iris-polymer-usercard/iris-usercard.html">
+<link rel="import" href="../../bower_components/iris-polymer-queuecard/iris-queuecard.html">
+<link rel="import" href="../../bower_components/iris-polymer-doomclock/iris-doomclock.html">
+<link rel="import" href="../../bower_components/iris-polymer-ticketview/iris-ticketview.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -16,110 +16,70 @@
     <style>
       :host {
         display: block;
-        --paper-card-header-text: {
-          font-size: 12pt;
-          text-align: center;
-          padding: 0;
-          margin: 0;
-        }
-        --paper-card-content: {
-          font-size: 12pt;
-          text-align: center;
-        }
-      }
-      
-      .data-tier > div {
-        width: 50%;
+        --paper-card-header-color: #702c0c;
       }
       
       #main-info > div {
         height: 250px;
       }
       
-      .data-tier paper-card {
-        width: 100%;
-        height: 30%;
-        margin-bottom: 3%;
-      }
-      
-      .data-tier paper-card paper-button {
-        --paper-button: {
-          @apply(--layout-vertical);
-          @apply(--layout-center-center);
-        }
-        ;
-      }
-      
-      paper-material {
-        padding: 5px 5%;
-      }
-      
       paper-button iron-icon {
         margin-top: -2px;
       }
+      
+      .cards>::content iris-queuecard {
+        margin-right: 10px;
+        margin-top: 10px;
+        @apply(--layout-flex);
+        min-width: 200px;
+      }
+      
+      .cards>::content paper-card .items-counter {
+        font-size: 24px;
+        padding: 10px;
+      }
+      
+      paper-card:last-child {
+        margin-right: 0;
+      }
+      
+      iris-ticketactions {
+        padding-top: 15px;
+      }
+      
+      .doomclcok .card-content {
+        font-size: 24px;
+        text-align: center;
+      }
+      
+      paper-card.doomclcok {
+        margin-top: 10px;
+        @apply(--layout-flex-2);
+        min-width: 250px;
+      }
     </style>
 
-    <iris-usercard on-menu="menuAction" api="{{api}}">
-      <paper-button>Перерыв</paper-button>
-      <paper-button>Завершить работу</paper-button>
-    </iris-usercard>
+    <iron-meta id="meta"></iron-meta>
 
-
-    <paper-material>
-      <div class="button-tier layout horizontal">
-        <paper-button class="flex" on-click="next">Следующий</paper-button>
-        <paper-button class="flex" on-click="list">
-          Список талонов
-          <iron-icon icon="icons:list">
-        </paper-button>
-      </div>
-    </paper-material>
-
-    <paper-material id="main-info" class="data-tier layout horizontal  around-justified">
-      <div class="layout vertical">
-        <paper-card elevation="0" heading="Вызван:">
-          <div class="card-content">Some content</div>
-        </paper-card>
-        <paper-card elevation="0" heading="Услуга:">
-          <div class="card-content">Some content</div>
-        </paper-card>
-        <paper-card elevation="0" heading="ФИО:">
-          <div class="card-content">Some content</div>
-        </paper-card>
-      </div>
-      <div class="layout vertical">
-        <paper-card elevation="0" heading="Время обслуживания:">
-          <div class="card-content">Some content</div>
-        </paper-card>
-        <paper-card elevation="0">
+    <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
+      <div class="cards layout horizontal wrap center-justified">
+        <content select="iris-queuecard"></content>
+        <paper-card class="doomclcok" heading="Время ожидания">
           <div class="card-content">
-            <paper-button raised on-click="retry">Повтор вызова</paper-button>
-          </div>
-        </paper-card>
-        <paper-card elevation="0">
-          <div class="card-content">
-            <paper-button raised on-click="redirect">Передать</paper-button>
+            <iris-doomclock></iris-doomclock>
           </div>
         </paper-card>
       </div>
-    </paper-material>
-
-    <paper-material>
-      <div class="button-tier layout horizontal">
-        <paper-button class="flex">Отложить</paper-button>
-        <paper-button class="flex">Список отложенных</paper-button>
-      </div>
-    </paper-material>
-
-    <paper-material class="data-tier layout horizontal  around-justified">
-      <paper-card elevation="0" heading="В очереди">
-        <div class="card-content">{{inqueue_count}}</div>
-      </paper-card>
-      <paper-card elevation="0" heading="Отложено">
-        <div class="card-content">{{postponed_count}}</div>
-      </paper-card>
-    </paper-material>
-
+      <iris-ticketview view="stateful">
+        <paper-card class=" ticket-action flexchild layout vertical">
+          <paper-button action="next" class="btn-primary" raised elevation="0"> Следующий </paper-button>
+          <paper-button action="come" class="btn-primary" raised elevation="0"> Подошел </paper-button>
+          <paper-button action="retry" class="btn-primary" disabled raised elevation="0"> Повтор вызова </paper-button>
+          <paper-button action="postpone" class="btn-primary" raised elevation="0"> Отложить </paper-button>
+          <paper-button action="route" class="btn-primary" raised elevation="0"> Передать </paper-button>
+        </paper-card>
+      </iris-ticketview>
+    </div>
   </template>
 
   <script>
@@ -127,28 +87,17 @@
       'use strict';
       Polymer({
         is: 'iris-controlpanel',
-        properties: {
-          api: Object
-        },
+        properties: {},
         ready() {
-          this.queue = this.api.require('queue');
+          let api = this.$.meta.byKey('api');
+          this.queue = api.require('queue');
           this.request_in_progress = false;
-          this.inqueue_count = 0;
-          this.postponed_count = 0;
 
-          setInterval(() => {
-            this.inqueue_count = parseInt(Math.random() * 400);
-            this.postponed_count = parseInt(Math.random() * 100);
-          }, 1500);
-
-          let user = this.api.require('user');
+          let user = api.require('user');
 
           user.on('user.fields.changed', () => {
             if (user.isLogged()) {
-              this.queue.on('queue.update', (queuedata) => {
-                this.set('inqueue_count', queuedata.status.in_queue);
-                this.set('postponed_count', queuedata.status.postponed);
-              });
+
             } else {
               then.queue.off('queue.update');
             }
@@ -174,6 +123,13 @@
         },
         menuAction() {
           console.log('menuAction');
+        },
+        ticketAction(e) {
+          let data = e.detail;
+
+          let ticket = data.ticket;
+          let action = data.action;
+          console.log(ticket, action);
         }
       });
     })();
