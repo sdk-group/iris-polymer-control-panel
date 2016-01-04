@@ -9,6 +9,7 @@
 <link rel="import" href="../../bower_components/iris-polymer-queuecard/iris-queuecard.html">
 <link rel="import" href="../../bower_components/iris-polymer-doomclock/iris-doomclock.html">
 <link rel="import" href="../../bower_components/iris-polymer-ticketview/iris-ticketview.html">
+<link rel="import" href="../../bower_components/iris-polymer-api/iris-api.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -28,8 +29,7 @@
       }
       
       .cards>::content iris-queuecard {
-        margin-right: 10px;
-        margin-top: 10px;
+        margin: 10px;
         @apply(--layout-flex);
         min-width: 200px;
       }
@@ -39,38 +39,39 @@
         padding: 10px;
       }
       
-      paper-card:last-child {
-        margin-right: 0;
-      }
-      
-      iris-ticketactions {
-        padding-top: 15px;
-      }
-      
       .doomclcok .card-content {
         font-size: 24px;
         text-align: center;
       }
       
       paper-card.doomclcok {
-        margin-top: 10px;
         @apply(--layout-flex-2);
         min-width: 250px;
+        margin: 10px;
       }
     </style>
 
-    <iron-meta id="meta"></iron-meta>
+    <iris-queue id="queue" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{current_ticket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-queue>
+    <iris-currentuser id="user"></iris-currentuser>
 
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards layout horizontal wrap center-justified">
         <content select="iris-queuecard"></content>
+        <iris-queuecard heading="В очереди">
+          <span class="items-counter">[[r_count]]</span>
+          <span class="button-name">список талонов</span>
+        </iris-queuecard>
+        <iris-queuecard heading="Отложено">
+          <span class="items-counter">[[p_count]]</span>
+          <span class="button-name">список отложенных</span>
+        </iris-queuecard>
         <paper-card class="doomclcok" heading="Время ожидания">
           <div class="card-content">
             <iris-doomclock></iris-doomclock>
           </div>
         </paper-card>
       </div>
-      <iris-ticketview view="stateful">
+      <iris-ticketview ticket="[[current_ticket]]" view="stateful">
         <paper-card class=" ticket-action flexchild layout vertical">
           <paper-button action="next" class="btn-primary" raised elevation="0"> Следующий </paper-button>
           <paper-button action="come" class="btn-primary" raised elevation="0"> Подошел </paper-button>
@@ -89,37 +90,15 @@
         is: 'iris-controlpanel',
         properties: {},
         ready() {
-          let api = this.$.meta.byKey('api');
-          this.queue = api.require('queue');
           this.request_in_progress = false;
-
-          let user = api.require('user');
-
-          user.on('user.fields.changed', () => {
-            if (user.isLogged()) {
-
-            } else {
-              then.queue.off('queue.update');
-            }
-          });
         },
         next() {
-          let next = this.queue.getNextTicket();
+          let next = this.$.queue.getNext();
         },
         specific(ticket) {
-          let specific = this.queue.getSpecificTicket(ticket);
-        },
-        postpone() {
+          let id = _.isNumber(ticket) ? ticket : ticket.getId();
 
-        },
-        redirect(route) {
-
-        },
-        close() {
-
-        },
-        retry() {
-
+          let specific = this.$.queue.getTicketById(id);
         },
         menuAction() {
           console.log('menuAction');
