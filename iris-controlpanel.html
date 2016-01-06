@@ -57,11 +57,11 @@
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards layout horizontal wrap center-justified">
         <content select="iris-queuecard"></content>
-        <iris-queuecard heading="В очереди">
+        <iris-queuecard heading="В очереди" tickets="{{queue_head}}">
           <span class="items-counter">[[r_count]]</span>
           <span class="button-name">список талонов</span>
         </iris-queuecard>
-        <iris-queuecard heading="Отложено">
+        <iris-queuecard heading="Отложено" tickets="{{postponed_head}}">
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
         </iris-queuecard>
@@ -71,11 +71,11 @@
           </div>
         </paper-card>
       </div>
-      <iris-ticketview ticket="[[current_ticket]]" view="stateful">
+      <iris-ticketview ticket="{{current_ticket}}" view="stateful">
         <paper-card class=" ticket-action flexchild layout vertical">
           <paper-button action="next" class="btn-primary" raised elevation="0"> Следующий </paper-button>
-          <paper-button action="come" class="btn-primary" raised elevation="0"> Подошел </paper-button>
-          <paper-button action="retry" class="btn-primary" disabled raised elevation="0"> Повтор вызова </paper-button>
+          <paper-button action="arrived" class="btn-primary" raised elevation="0"> Подошел </paper-button>
+          <paper-button action="call-again" class="btn-primary" raised elevation="0"> Повтор вызова </paper-button>
           <paper-button action="postpone" class="btn-primary" raised elevation="0"> Отложить </paper-button>
           <paper-button action="route" class="btn-primary" raised elevation="0"> Передать </paper-button>
         </paper-card>
@@ -91,16 +91,41 @@
         properties: {},
         ready() {
           this.request_in_progress = false;
+          let self = this;
+
+          this.action_handlers = {
+            'next': function(ticket) {
+              self.$.workstation.getNext();
+            },
+            'call-again': function(ticket) {
+              ticket.callAgain();
+            },
+            'route': function(ticket) {
+              console.log('Open route dialog here');
+            },
+            'default': function(ticket, action) {
+              let ticket_method = ticket[action];
+              if (ticket_method instanceof Function) {
+                ticket_method.call(ticket)
+              }
+            },
+          };
+
         },
         menuAction() {
           console.log('menuAction');
         },
         ticketAction(e) {
           let data = e.detail;
-
           let ticket = data.ticket;
           let action = data.action;
-          console.log(ticket, action);
+
+          if (this.action_handlers[action]) {
+            this.action_handlers[action](ticket);
+          } else {
+            this.action_handlers.default(ticket, action);
+          }
+
         }
       });
     })();
