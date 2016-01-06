@@ -51,8 +51,8 @@
       }
     </style>
 
-    <iris-queue id="queue" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{current_ticket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-queue>
     <iris-currentuser id="user"></iris-currentuser>
+    <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{current_ticket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards layout horizontal wrap center-justified">
@@ -91,14 +91,6 @@
         properties: {},
         ready() {
           this.request_in_progress = false;
-        },
-        next() {
-          let next = this.$.queue.getNext();
-        },
-        specific(ticket) {
-          let id = _.isNumber(ticket) ? ticket : ticket.getId();
-
-          let specific = this.$.queue.getTicketById(id);
         },
         menuAction() {
           console.log('menuAction');
