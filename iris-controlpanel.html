@@ -49,6 +49,18 @@
         min-width: 250px;
         margin: 10px;
       }
+      
+      .ticket-action {
+        padding: 10px;
+      }
+      
+      .ticket-action paper-button {
+        margin-top: 20px;
+      }
+      
+      .ticket-action paper-button:first-of-type {
+        margin-top: 0;
+      }
     </style>
 
     <iris-currentuser id="user"></iris-currentuser>
@@ -67,12 +79,12 @@
         </iris-queuecard>
         <paper-card class="doomclcok" heading="Время ожидания">
           <div class="card-content">
-            <iris-doomclock></iris-doomclock>
+            <iris-doomclock id="countdown"></iris-doomclock>
           </div>
         </paper-card>
       </div>
       <iris-ticketview ticket="{{current_ticket}}" view="stateful">
-        <paper-card class=" ticket-action flexchild layout vertical">
+        <paper-card class="ticket-action flexchild layout vertical">
           <paper-button action="next" class="btn-primary" raised elevation="0"> Следующий </paper-button>
           <paper-button action="arrived" class="btn-primary" raised elevation="0"> Подошел </paper-button>
           <paper-button action="call-again" class="btn-primary" raised elevation="0"> Повтор вызова </paper-button>
@@ -86,11 +98,42 @@
   <script>
     (function() {
       'use strict';
+
       Polymer({
         is: 'iris-controlpanel',
-        properties: {},
+        properties: {
+          current_ticket: {
+            observer: '_currentTicketChanged'
+          }
+
+        },
+        _currentTicketChanged() {
+          let state = this.current_ticket.state;
+          switch (state) {
+            case 'open':
+              this.$.countdown.direction = 'up';
+              this.$.countdown.start = this.current_ticket.booking_date;
+              this.$.countdown.redZone = 0;
+              break;
+            case 'waiting':
+              this.$.countdown.direction = 'down';
+              this.$.countdown.redZone = this.waiting_red_zone;
+              this.$.countdown.start = this.waiting_time;
+
+              break;
+            case 'processing':
+              this.$.countdown.direction = 'up';
+              this.$.countdown.start = Date.now();
+              let time_of_service = this.current_ticket.time_description[1] - this.current_ticket.time_description[0];
+              this.$.countdown.redZone = _.floor(time_of_service - 0.3 * time_of_service);
+              break;
+          }
+          this.$.countdown.restart();
+        },
         ready() {
           this.request_in_progress = false;
+          this.waiting_time = 45000;
+          this.waiting_red_zone = 10000;
           let self = this;
 
           this.action_handlers = {
@@ -111,9 +154,6 @@
             },
           };
 
-        },
-        menuAction() {
-          console.log('menuAction');
         },
         ticketAction(e) {
           let data = e.detail;
