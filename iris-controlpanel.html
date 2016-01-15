@@ -110,12 +110,12 @@
         _currentTicketChanged() {
           let state = this.current_ticket.state;
           switch (state) {
-            case 'open':
+            case 'registered':
               this.$.countdown.direction = 'up';
               this.$.countdown.start = this.current_ticket.booking_date;
               this.$.countdown.redZone = 0;
               break;
-            case 'waiting':
+            case 'called':
               this.$.countdown.direction = 'down';
               this.$.countdown.redZone = this.waiting_red_zone;
               this.$.countdown.start = this.waiting_time;
