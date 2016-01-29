@@ -108,7 +108,8 @@
 
         },
         _currentTicketChanged() {
-          let state = this.current_ticket.state;
+
+          let state = this.current_ticket ? this.current_ticket.state : 'no-state';
           switch (state) {
             case 'registered':
               this.$.countdown.direction = 'up';
@@ -126,6 +127,11 @@
               this.$.countdown.start = Date.now();
               let time_of_service = this.current_ticket.time_description[1] - this.current_ticket.time_description[0];
               this.$.countdown.redZone = _.floor(time_of_service - 0.3 * time_of_service);
+              break;
+            case 'no-state':
+              this.$.countdown.direction = 'up';
+              this.$.countdown.start = Date.now();
+              this.$.countdown.redZone = 0;
               break;
           }
           this.$.countdown.restart();
