@@ -85,14 +85,14 @@
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
         </iris-queuecard>
-        <paper-card class="doomclcok" heading="Время ожидания" hidden$="[[doomclockHidden]]">
+        <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[doomclockHidden]]">
           <div class="card-content">
             <iris-doomclock id="countdown"></iris-doomclock>
           </div>
         </paper-card>
-        <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[!doomclockHidden]]">
+        <paper-card class="doomclcok" hidden$="[[!doomclockHidden]]">
           <div class="card-content">
-            <iris-clock timezone="Asia/Dhaka" time="{{now}}"></iris-clock>
+            <iris-clock timezone="Asia/Dhaka" current-time="{{now}}"></iris-clock>
           </div>
         </paper-card>
       </div>
