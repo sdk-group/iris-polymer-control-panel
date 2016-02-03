@@ -3,6 +3,7 @@
 
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 
 <link rel="import" href="../../bower_components/iris-polymer-usercard/iris-usercard.html">
@@ -10,6 +11,7 @@
 <link rel="import" href="../../bower_components/iris-polymer-doomclock/iris-doomclock.html">
 <link rel="import" href="../../bower_components/iris-polymer-ticketview/iris-ticketview.html">
 <link rel="import" href="../../bower_components/iris-polymer-api/iris-api.html">
+<link rel="import" href="../../bower_components/iris-polymer-clock/iris-clock.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -18,6 +20,9 @@
       :host {
         display: block;
         --paper-card-header-color: #702c0c;
+        --doomclcok-red: {
+          color: red;
+        }
       }
       
       #main-info > div {
@@ -51,45 +56,66 @@
       }
       
       .ticket-action {
-        padding: 10px;
+        padding: 0 10px 10px 10px;
       }
       
       .ticket-action paper-button {
-        margin-top: 20px;
+        margin-top: 10px;
+        font-size: 20px;
       }
       
-      .ticket-action paper-button:first-of-type {
-        margin-top: 0;
+      paper-spinner {
+        height: 20px;
+        width: 20px;
+        top: 2px;
       }
     </style>
 
     <iris-currentuser id="user"></iris-currentuser>
-    <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{current_ticket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
+    <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards layout horizontal wrap center-justified">
         <content select="iris-queuecard"></content>
-        <iris-queuecard heading="В очереди" tickets="{{queue_head}}">
+        <iris-queuecard heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[r_count]]</span>
           <span class="button-name">список талонов</span>
         </iris-queuecard>
-        <iris-queuecard heading="Отложено" tickets="{{postponed_head}}">
+        <iris-queuecard heading="Отложено" tickets="{{postponed_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
         </iris-queuecard>
-        <paper-card class="doomclcok" heading="Время ожидания">
+        <paper-card class="doomclcok" heading="Время ожидания" hidden$="[[doomclockHidden]]">
           <div class="card-content">
             <iris-doomclock id="countdown"></iris-doomclock>
           </div>
         </paper-card>
+        <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[!doomclockHidden]]">
+          <div class="card-content">
+            <iris-clock timezone="Asia/Dhaka" time="{{now}}"></iris-clock>
+          </div>
+        </paper-card>
       </div>
-      <iris-ticketview ticket="{{current_ticket}}" view="stateful">
+      <iris-ticketview ticket="{{currentTicket}}" view="stateful">
         <div class="ticket-action flexchild layout vertical">
-          <paper-button ticket-action="next" class="btn-primary" raised elevation="0"> Следующий </paper-button>
-          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0"> Подошел </paper-button>
-          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0"> Повтор вызова </paper-button>
-          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0"> Отложить </paper-button>
-          <paper-button ticket-action="route" class="btn-primary" raised elevation="0"> Передать </paper-button>
+          <paper-button ticket-action="next" class="btn-primary" raised elevation="0"> Следующий
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
+          <paper-button ticket-action="close-and-next" class="btn-primary" raised elevation="0"> Следующий
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
+          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0"> Подошел
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
+          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0"> Повтор вызова
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
+          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0"> Отложить
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
+          <paper-button ticket-action="route" class="btn-primary" raised elevation="0"> Передать
+            <paper-spinner alt="Loading"></paper-spinner>
+          </paper-button>
         </div>
       </iris-ticketview>
     </div>
@@ -102,62 +128,87 @@
       Polymer({
         is: 'iris-controlpanel',
         properties: {
-          current_ticket: {
+          currentTicket: {
             observer: '_currentTicketChanged'
           }
-
+        },
+        canOpenQueue(currentTicket) {
+          return currentTicket.state === 'registered';
         },
         _currentTicketChanged() {
-
-          let state = this.current_ticket ? this.current_ticket.state : 'no-state';
+          console.log('ticket changed');
+          let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
           switch (state) {
             case 'registered':
+              this.set('doomclockHidden', false);
+              this.set('doomclockHeading', 'Время ожидания');
               this.$.countdown.direction = 'up';
-              this.$.countdown.start = this.current_ticket.booking_date;
+              this.$.countdown.start = this.currentTicket.booking_date;
               this.$.countdown.redZone = 0;
               break;
             case 'called':
+              this.set('doomclockHidden', false);
+              this.set('doomclockHeading', 'Ожидание посетителя');
               this.$.countdown.direction = 'down';
               this.$.countdown.redZone = this.waiting_red_zone;
               this.$.countdown.start = this.waiting_time;
-
               break;
             case 'processing':
-              this.$.countdown.direction = 'up';
+              this.set('doomclockHidden', false);
+              this.set('doomclockHeading', 'Время обслуживания');
+              this.$.countdown.direction = 'down';
               this.$.countdown.start = Date.now();
-              let time_of_service = this.current_ticket.time_description[1] - this.current_ticket.time_description[0];
-              this.$.countdown.redZone = _.floor(time_of_service - 0.3 * time_of_service);
+              let time_of_service = this.currentTicket.time_description[1] - this.currentTicket.time_description[0];
+              this.$.countdown.redZone = _.floor(0.3 * time_of_service);
+              this.$.countdown.start = time_of_service;
               break;
             case 'no-state':
               this.$.countdown.direction = 'up';
               this.$.countdown.start = Date.now();
               this.$.countdown.redZone = 0;
+              this.set('doomclockHidden', true);
               break;
           }
           this.$.countdown.restart();
         },
         ready() {
+          this.now = Date.now();
+          this.doomclockHeading = 'Время ожидания';
+          this.doomclockHidden = true;
           this.request_in_progress = false;
           this.waiting_time = 45000;
-          this.waiting_red_zone = 10000;
+          this.waiting_red_zone = 15000;
 
           let self = this;
 
           this.action_handlers = {
             'next': function(ticket) {
-              self.$.workstation.getNext();
+              return self.$.workstation.getNext();
             },
             'call-again': function(ticket) {
-              ticket.callAgain();
+              return ticket.callAgain();
             },
             'route': function(ticket) {
               console.log('Open route dialog here');
+              return Promise.resolve(true)
+            },
+            'close-and-next': function(ticket) {
+              return ticket.close().then((r) => {
+                console.log('close and next', r);
+                self.$.workstation.getNext()
+              });
             },
             'default': function(ticket, action) {
               let ticket_method = ticket[action];
-              if (ticket_method instanceof Function) {
-                ticket_method.call(ticket)
-              }
+              if (!_.isFunction(ticket_method)) return;
+
+              return ticket_method.call(ticket).then((r) => {
+                // console.log('action %s result:', action, r);
+                // console.log('ticket now:', ticket);
+                self.$.workstation.notifyTicketAction(ticket, action);
+                return true;
+              });
+
             },
           };
 
@@ -167,11 +218,24 @@
           let ticket = data.ticket;
           let action = data.action;
 
+          let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
+          let spinner = button.querySelector('paper-spinner');
+          button.setAttribute('disabled', true);
+          spinner.setAttribute('active', true);
+          let done;
           if (this.action_handlers[action]) {
-            this.action_handlers[action](ticket);
+            done = this.action_handlers[action](ticket);
           } else {
-            this.action_handlers.default(ticket, action);
+            done = this.action_handlers.default(ticket, action);
           }
+
+          done.then(() => {
+            spinner.removeAttribute('active');
+            button.removeAttribute('disabled');
+          }).catch(() => {
+            spinner.removeAttribute('active');
+            button.removeAttribute('disabled');
+          })
 
         }
       });
