@@ -92,6 +92,7 @@
         </paper-card>
         <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[!doomclockHidden]]">
           <div class="card-content">
+            <div class="break" hiden$="{{}}">Перерыв</div>
             <iris-clock timezone="Asia/Dhaka" time="{{now}}"></iris-clock>
           </div>
         </paper-card>
@@ -133,7 +134,7 @@
           }
         },
         canOpenQueue(currentTicket) {
-          return currentTicket.state === 'registered';
+          return currentTicket.state !== 'called';
         },
         _currentTicketChanged() {
           console.log('ticket changed');
