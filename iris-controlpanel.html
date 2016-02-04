@@ -12,6 +12,8 @@
 <link rel="import" href="../../bower_components/iris-polymer-ticketview/iris-ticketview.html">
 <link rel="import" href="../../bower_components/iris-polymer-api/iris-api.html">
 <link rel="import" href="../../bower_components/iris-polymer-clock/iris-clock.html">
+<link rel="import" href="../../bower_components/iris-polymer-styles/mydoc-color.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -19,9 +21,10 @@
     <style>
       :host {
         display: block;
-        --paper-card-header-color: #702c0c;
+        color: var(--mydoc-brown-1000);
+        --paper-card-header-color: var(--mydoc-brown-1000);
         --doomclcok-red: {
-          color: red;
+          color: var(--mydoc-red-800);
         }
       }
       
@@ -69,13 +72,30 @@
         width: 20px;
         top: 2px;
       }
+      
+      .break {
+        float: left;
+      }
+      
+      .card-content iris-clock {
+        float: right;
+      }
+      
+      .red {
+        color: var(--mydoc-red-800);
+      }
+      
+      .cards {
+        @apply(--layout);
+        @apply(--layout-wrap);
+      }
     </style>
 
-    <iris-currentuser id="user"></iris-currentuser>
+    <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
-      <div class="cards layout horizontal wrap center-justified">
+      <div class="cards">
         <content select="iris-queuecard"></content>
         <iris-queuecard heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[r_count]]</span>
@@ -85,14 +105,14 @@
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
         </iris-queuecard>
-        <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[doomclockHidden]]">
+        <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[showClock(isPaused,currentTicket)]]">
           <div class="card-content">
             <iris-doomclock id="countdown"></iris-doomclock>
           </div>
         </paper-card>
-        <paper-card class="doomclcok" hidden$="[[!doomclockHidden]]">
+        <paper-card class="doomclcok" hidden$="[[!showClock(isPaused,currentTicket)]]">
           <div class="card-content">
-            <div class="break" hiden$="{{}}">Перерыв</div>
+            <div class="break red" hidden$="[[!isPaused]]">Перерыв</div>
             <iris-clock timezone="Asia/Dhaka" current-time="{{now}}"></iris-clock>
           </div>
         </paper-card>
@@ -130,32 +150,33 @@
         is: 'iris-controlpanel',
         properties: {
           currentTicket: {
+            value: {},
             observer: '_currentTicketChanged'
           }
         },
         canOpenQueue(currentTicket) {
           return currentTicket.state !== 'called';
         },
+        showClock(paused, currentTicket) {
+          return paused || !currentTicket.state;
+        },
         _currentTicketChanged() {
           console.log('ticket changed');
           let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
           switch (state) {
             case 'registered':
-              this.set('doomclockHidden', false);
               this.set('doomclockHeading', 'Время ожидания');
               this.$.countdown.direction = 'up';
               this.$.countdown.start = this.currentTicket.booking_date;
               this.$.countdown.redZone = 0;
               break;
             case 'called':
-              this.set('doomclockHidden', false);
               this.set('doomclockHeading', 'Ожидание посетителя');
               this.$.countdown.direction = 'down';
               this.$.countdown.redZone = this.waiting_red_zone;
               this.$.countdown.start = this.waiting_time;
               break;
             case 'processing':
-              this.set('doomclockHidden', false);
               this.set('doomclockHeading', 'Время обслуживания');
               this.$.countdown.direction = 'down';
               this.$.countdown.start = Date.now();
