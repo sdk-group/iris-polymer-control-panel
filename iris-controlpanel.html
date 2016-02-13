@@ -177,7 +177,9 @@
               this.set('doomclockHeading', 'Время обслуживания');
               this.$.countdown.direction = 'down';
               this.$.countdown.start = Date.now();
-              let time_of_service = this.currentTicket.time_description[1] - this.currentTicket.time_description[0];
+              console.log(this.currentTicket);
+              let time_of_service = (this.currentTicket.time_description[1] - this.currentTicket.time_description[0]) * 1000;
+              console.log('Time of service', time_of_service);
               this.$.countdown.redZone = _.floor(0.3 * time_of_service);
               this.$.countdown.start = time_of_service;
               break;
