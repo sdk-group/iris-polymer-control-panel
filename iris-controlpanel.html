@@ -90,6 +90,7 @@
         @apply(--layout-wrap);
       }
     </style>
+    <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
 
     <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
@@ -97,11 +98,11 @@
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards">
         <content select="iris-queuecard"></content>
-        <iris-queuecard heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
+        <iris-queuecard id="live_queue" heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[r_count]]</span>
           <span class="button-name">список талонов</span>
         </iris-queuecard>
-        <iris-queuecard heading="Отложено" tickets="{{postponed_head}}" active="[[canOpenQueue(currentTicket)]]">
+        <iris-queuecard id="postponed_queue" heading="Отложено" tickets="{{postponed_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
         </iris-queuecard>
@@ -137,6 +138,7 @@
         </div>
       </iris-ticketview>
     </div>
+
   </template>
 
   <script>
@@ -193,6 +195,38 @@
           this.$.countdown.restart();
         },
         ready() {
+          let standart = [{
+            label: "Действие",
+            caption: "Принять",
+            name: 'process',
+            transform: 'action'
+          }, {
+            label: "№ талона",
+            field: 'label'
+          }, {
+            label: 'Услуга',
+            field: 'service',
+            transform: (ticket) => {
+              let service_id = ticket.service;
+              return this.$.shared.get(service_id).label;
+            }
+          }, {
+            label: 'Число дел',
+            field: 'service_count'
+          }, {
+            label: 'ФИО',
+            field: 'fio',
+            transform: function(ticket) {
+              return ticket.client.fio;
+            }
+          }];
+          this.$.live_queue.row_model = _.concat(standart, [{
+            label: 'Время ожидания',
+            field: ['booking_date'],
+            transform: 'doomclock'
+          }]);
+
+          this.$.postponed_queue.row_model = standart;
           this.now = Date.now();
           this.doomclockHeading = 'Время ожидания';
           this.doomclockHidden = true;
