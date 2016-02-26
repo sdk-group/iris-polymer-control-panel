@@ -91,6 +91,7 @@
       }
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
+    <iris-settings-access id="settings"></iris-settings-access>
 
     <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
@@ -174,6 +175,9 @@
               this.$.countdown.direction = 'down';
               this.$.countdown.redZone = this.waiting_red_zone;
               this.$.countdown.start = this.waiting_time;
+
+              this.lockArriveButton();
+
               break;
             case 'processing':
               this.set('doomclockHeading', 'Время обслуживания');
@@ -195,6 +199,7 @@
           this.$.countdown.restart();
         },
         ready() {
+
           let standart = [{
             label: "Действие",
             caption: "Принять",
@@ -267,6 +272,16 @@
             },
           };
 
+        },
+        lockArriveButton() {
+          let delay = this.$.settings.getItem('lock_delay');
+          if (delay) {
+            let button = this.querySelector('.ticket-action paper-button[ticket-action=arrived]');
+            button.setAttribute('disabled', true);
+            this.debounce('lock-arrive-button', () => {
+              button.removeAttribute('disabled');
+            }, delay * 1000);
+          }
         },
         ticketAction(e) {
           let data = e.detail;
