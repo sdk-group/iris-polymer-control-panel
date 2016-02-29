@@ -27,70 +27,70 @@
           color: var(--mydoc-red-800);
         }
       }
-      
+
       #main-info > div {
         height: 250px;
       }
-      
+
       paper-button iron-icon {
         margin-top: -2px;
       }
-      
       .cards>::content iris-queuecard {
         margin: 10px;
         @apply(--layout-flex);
         min-width: 200px;
       }
-      
       .cards>::content paper-card .items-counter {
         font-size: 24px;
         padding: 10px;
       }
-      
+
       .doomclcok .card-content {
         font-size: 24px;
         text-align: center;
       }
-      
+
       paper-card.doomclcok {
         @apply(--layout-flex-2);
         min-width: 250px;
         margin: 10px;
       }
-      
+
       .ticket-action {
-        padding: 0 10px 10px 10px;
+        padding: 0 10px 10px;
       }
-      
+
       .ticket-action paper-button {
         margin-top: 10px;
         font-size: 20px;
       }
-      
+
       paper-spinner {
         height: 20px;
         width: 20px;
         top: 2px;
       }
-      
+
       .break {
         float: left;
       }
-      
+
       .card-content iris-clock {
         float: right;
       }
-      
+
       .red {
         color: var(--mydoc-red-800);
       }
-      
+
       .cards {
         @apply(--layout);
         @apply(--layout-wrap);
       }
+
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
+    <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
     <iris-settings-access id="settings"></iris-settings-access>
 
     <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
@@ -121,19 +121,24 @@
       </div>
       <iris-ticketview ticket="{{currentTicket}}" view="stateful">
         <div class="ticket-action flexchild layout vertical">
-          <paper-button ticket-action="next" class="btn-primary" raised elevation="0"> Следующий
+          <paper-button ticket-action="next" class="btn-primary" raised elevation="0">
+            Следующий
             <paper-spinner alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0"> Подошел
+          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0">
+            Подошел
             <paper-spinner alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0"> Повтор вызова
+          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0">
+            Повтор вызова
             <paper-spinner alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0"> Отложить
+          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0">
+            Отложить
             <paper-spinner alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="route" class="btn-primary" raised elevation="0"> Передать
+          <paper-button ticket-action="route" class="btn-primary" raised elevation="0">
+            Передать
             <paper-spinner alt="Loading"></paper-spinner>
           </paper-button>
         </div>
@@ -143,7 +148,7 @@
   </template>
 
   <script>
-    (function() {
+    (function () {
       'use strict';
 
       Polymer({
@@ -162,34 +167,41 @@
         },
         _currentTicketChanged() {
           console.log('ticket changed');
-          let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
+          let state = !_.isEmpty(this.currentTicket)
+            ? this.currentTicket.state
+            : 'no-state';
           switch (state) {
             case 'registered':
+              console.log('registered');
               this.set('doomclockHeading', 'Время ожидания');
               this.$.countdown.direction = 'up';
               this.$.countdown.start = this.currentTicket.booking_date;
               this.$.countdown.redZone = 0;
               break;
             case 'called':
+              console.log('called');
               this.set('doomclockHeading', 'Ожидание посетителя');
+
+              let waiting_time = this.$.office.get('live_autopostpone') * 1000;
+
+              this.$.countdown.redZone = _.floor(waiting_time * 0.3);
+              this.$.countdown.start = waiting_time;
               this.$.countdown.direction = 'down';
-              this.$.countdown.redZone = this.waiting_red_zone;
-              this.$.countdown.start = this.waiting_time;
 
               this.lockArriveButton();
 
               break;
             case 'processing':
+              console.log('processing');
               this.set('doomclockHeading', 'Время обслуживания');
               this.$.countdown.direction = 'down';
-              this.$.countdown.start = Date.now();
-              console.log(this.currentTicket);
+
               let time_of_service = (this.currentTicket.time_description[1] - this.currentTicket.time_description[0]) * 1000;
-              console.log('Time of service', time_of_service);
               this.$.countdown.redZone = _.floor(0.3 * time_of_service);
               this.$.countdown.start = time_of_service;
               break;
             case 'no-state':
+              console.log('no-state');
               this.$.countdown.direction = 'up';
               this.$.countdown.start = Date.now();
               this.$.countdown.redZone = 0;
@@ -200,68 +212,71 @@
         },
         ready() {
 
-          let standart = [{
-            label: "Действие",
-            caption: "Принять",
-            name: 'process',
-            transform: 'action'
-          }, {
-            label: "№ талона",
-            field: 'label'
-          }, {
-            label: 'Услуга',
-            field: 'service',
-            transform: (ticket) => {
-              let service_id = ticket.service;
-              return this.$.shared.get(service_id).label;
+          let standart = [
+            {
+              label: "Действие",
+              caption: "Принять",
+              name: 'process',
+              transform: 'action'
+            }, {
+              label: "№ талона",
+              field: 'label'
+            }, {
+              label: 'Услуга',
+              field: 'service',
+              transform: (ticket) => {
+                let service_id = ticket.service;
+                return this.$.shared.get(service_id).label;
+              }
+            }, {
+              label: 'Число дел',
+              field: 'service_count'
+            }, {
+              label: 'ФИО',
+              field: 'fio',
+              transform: function (ticket) {
+                return ticket.client.fio;
+              }
             }
-          }, {
-            label: 'Число дел',
-            field: 'service_count'
-          }, {
-            label: 'ФИО',
-            field: 'fio',
-            transform: function(ticket) {
-              return ticket.client.fio;
+          ];
+          this.$.live_queue.row_model = _.concat(standart, [
+            {
+              label: 'Время ожидания',
+              field: ['booking_date'],
+              transform: 'doomclock'
             }
-          }];
-          this.$.live_queue.row_model = _.concat(standart, [{
-            label: 'Время ожидания',
-            field: ['booking_date'],
-            transform: 'doomclock'
-          }]);
+          ]);
 
           this.$.postponed_queue.row_model = standart;
           this.now = Date.now();
           this.doomclockHeading = 'Время ожидания';
           this.doomclockHidden = true;
           this.request_in_progress = false;
-          this.waiting_time = 45000;
-          this.waiting_red_zone = 15000;
 
           let self = this;
 
           this.action_handlers = {
-            'next': function(ticket) {
+            'next': function (ticket) {
               return self.$.workstation.getNext();
             },
-            'call-again': function(ticket) {
+            'call-again': function (ticket) {
               return ticket.callAgain();
             },
-            'route': function(ticket) {
+            'route': function (ticket) {
               console.log('Open route dialog here');
               return Promise.resolve(true)
             },
-            'process': function(ticket) {
+            'process': function (ticket) {
               return self.$.workstation.getTicketById(ticket);
             },
-            'postpone': function(ticket) {
+            'postpone': function (ticket) {
               return self.$.workstation.postponeTicket(ticket);
             },
-            'default': function(ticket, action) {
+            'default': function (ticket, action) {
               let ticket_method = ticket[action];
-              if (!_.isFunction(ticket_method)) return;
-
+              if (!_.isFunction(ticket_method)) 
+                return;
+              
               return ticket_method.call(ticket).then((r) => {
                 console.log('action %s result:', action, r);
                 // console.log('ticket now:', ticket);
@@ -269,7 +284,7 @@
                 return true;
               });
 
-            },
+            }
           };
 
         },
@@ -289,13 +304,17 @@
           let action = data.action;
 
           let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
-          let spinner = button ? button.querySelector('paper-spinner') : false;
+          let spinner = button
+            ? button.querySelector('paper-spinner')
+            : false;
           if (button && spinner) {
             button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
           }
 
-          let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
+          let done = this.action_handlers[action]
+            ? this.action_handlers[action](ticket)
+            : this.action_handlers.default(ticket, action);
 
           if (button && spinner) {
             done.then(() => {
