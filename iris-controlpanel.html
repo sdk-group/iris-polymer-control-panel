@@ -26,6 +26,10 @@
         --doomclcok-red: {
           color: var(--mydoc-red-800);
         }
+        --paper-spinner-layer-1-color: var(--mydoc-red-1000);
+        --paper-spinner-layer-2-color: var(--mydoc-red-800);
+        --paper-spinner-layer-3-color: var(--mydoc-brown-1000);
+        --paper-spinner-layer-4-color: var(--mydoc-beige-1000);
       }
       
       #main-info > div {
@@ -92,6 +96,7 @@
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
     <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
+    <iris-settings-access id="settings"></iris-settings-access>
 
     <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
@@ -179,6 +184,7 @@
               break;
             case 'called':
               console.log('called');
+
               this.set('doomclockHeading', 'Ожидание посетителя');
 
               let waiting_time = this.$.office.get('live_autopostpone') * 1000;
@@ -186,6 +192,7 @@
               this.$.countdown.redZone = _.floor(waiting_time * 0.3);
               this.$.countdown.start = waiting_time;
               this.$.countdown.direction = 'down';
+              this.lockArriveButton();
 
               break;
             case 'processing':
@@ -231,7 +238,7 @@
             label: 'ФИО',
             field: 'fio',
             transform: function(ticket) {
-              return ticket.client.fio;
+              return _.map(_.split(ticket.client.fio, ' '), word => _.upperFirst(word)).join(' ');
             }
           }];
           this.$.live_queue.row_model = _.concat(standart, [{
@@ -263,23 +270,24 @@
               return self.$.workstation.getTicketById(ticket);
             },
             'postpone': function(ticket) {
+              self.cancelDebouncer('lock-arrive-button');
               return self.$.workstation.postponeTicket(ticket);
             },
             'default': function(ticket, action) {
-              let ticket_method = ticket[action];
-              if (!_.isFunction(ticket_method))
-                return;
-
-              return ticket_method.call(ticket).then((r) => {
-                console.log('action %s result:', action, r);
-                // console.log('ticket now:', ticket);
-                self.$.workstation.notifyTicketAction(ticket, action);
-                return true;
-              });
-
+              return self.$.workstation.performTicketAction(ticket, action);
             }
           };
 
+        },
+        lockArriveButton() {
+          let delay = this.$.settings.getItem('lock_delay');
+          if (delay) {
+            let button = this.querySelector('.ticket-action paper-button[ticket-action=arrived]');
+            button.setAttribute('disabled', true);
+            this.debounce('lock-arrive-button', () => {
+              button.removeAttribute('disabled');
+            }, delay * 1000);
+          }
         },
         ticketAction(e) {
           let data = e.detail;
@@ -287,23 +295,36 @@
           let action = data.action;
 
           let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
+
+          let all_action_buttons = this.querySelectorAll('.ticket-action paper-button');
+          _.forEach(all_action_buttons, b => b.setAttribute('disabled', true));
+
           let spinner = button ? button.querySelector('paper-spinner') : false;
           if (button && spinner) {
-            button.setAttribute('disabled', true);
+            // button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
           }
 
           let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
 
+          done.then(() => {
+            this.$.live_queue.closeList();
+            this.$.postponed_queue.closeList();
+          });
+
           if (button && spinner) {
-            done.then(() => {
+            done.then((d) => {
+              console.log('action complete', d);
+            }).catch((d) => {
+              console.log('action failed', d);
+            }).then(() => {
+              console.log('remove spinner');
               spinner.removeAttribute('active');
-              button.removeAttribute('disabled');
-            }).catch(() => {
-              spinner.removeAttribute('active');
-              button.removeAttribute('disabled');
-            })
+              // button.removeAttribute('disabled');
+            });
           }
+
+
         }
       });
     })();
