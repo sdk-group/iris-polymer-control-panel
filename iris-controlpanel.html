@@ -26,11 +26,10 @@
         --doomclcok-red: {
           color: var(--mydoc-red-800);
         }
-        ;
-        --paper-drawer-panel-main-container: {
-          overflow-y: hidden;
-        }
-        ;
+        --paper-spinner-layer-1-color: var(--mydoc-red-1000);
+        --paper-spinner-layer-2-color: var(--mydoc-red-800);
+        --paper-spinner-layer-3-color: var(--mydoc-brown-1000);
+        --paper-spinner-layer-4-color: var(--mydoc-beige-1000);
       }
       
       #main-info > div {
@@ -189,8 +188,9 @@
         showClock(paused, currentTicket) {
           return paused || !currentTicket.state;
         },
-        _currentTicketChanged() {
-          console.log('ticket changed');
+        _currentTicketChanged(new_ticket, old_ticket) {
+          if (new_ticket && old_ticket && new_ticket.id == old_ticket.id && new_ticket.state == old_ticket.state) return;
+          console.log('ticket changed', new_ticket, old_ticket);
           let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
           switch (state) {
             case 'registered':
@@ -202,6 +202,7 @@
               break;
             case 'called':
               console.log('called');
+
               this.set('doomclockHeading', 'Ожидание посетителя');
 
               let waiting_time = this.$.office.get('live_autopostpone') * 1000;
@@ -209,7 +210,6 @@
               this.$.countdown.redZone = _.floor(waiting_time * 0.3);
               this.$.countdown.start = waiting_time;
               this.$.countdown.direction = 'down';
-
               this.lockArriveButton();
 
               break;
@@ -256,7 +256,7 @@
             label: 'ФИО',
             field: 'fio',
             transform: function(ticket) {
-              return ticket.client.fio;
+              return _.map(_.split(ticket.client.fio, ' '), word => _.upperFirst(word)).join(' ');
             }
           }];
           this.$.live_queue.row_model = _.concat(standart, [{
@@ -288,20 +288,11 @@
               return self.$.workstation.getTicketById(ticket);
             },
             'postpone': function(ticket) {
+              self.cancelDebouncer('lock-arrive-button');
               return self.$.workstation.postponeTicket(ticket);
             },
             'default': function(ticket, action) {
-              let ticket_method = ticket[action];
-              if (!_.isFunction(ticket_method))
-                return;
-
-              return ticket_method.call(ticket).then((r) => {
-                console.log('action %s result:', action, r);
-                // console.log('ticket now:', ticket);
-                self.$.workstation.notifyTicketAction(ticket, action);
-                return true;
-              });
-
+              return self.$.workstation.performTicketAction(ticket, action);
             }
           };
 
@@ -322,23 +313,35 @@
           let action = data.action;
 
           let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
+
+          let all_action_buttons = this.querySelectorAll('.ticket-action paper-button');
+          _.forEach(all_action_buttons, b => b.setAttribute('disabled', true));
+
           let spinner = button ? button.querySelector('paper-spinner') : false;
           if (button && spinner) {
-            button.setAttribute('disabled', true);
+            // button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
           }
 
           let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
 
-          if (button && spinner) {
-            done.then(() => {
-              spinner.removeAttribute('active');
-              button.removeAttribute('disabled');
-            }).catch(() => {
-              spinner.removeAttribute('active');
-              button.removeAttribute('disabled');
-            })
-          }
+          done.then(() => {
+            this.$.live_queue.closeList();
+            this.$.postponed_queue.closeList();
+          });
+
+          if (!button || !spinner) return true;
+
+          done.then((d) => {
+            console.log('action complete', d);
+          }).catch((d) => {
+            console.log('action failed', d);
+          }).then(() => {
+            console.log('remove spinner');
+            spinner.removeAttribute('active');
+            // button.removeAttribute('disabled');
+          });
+
         }
       });
     })();
