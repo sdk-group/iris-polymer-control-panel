@@ -26,68 +26,74 @@
         --doomclcok-red: {
           color: var(--mydoc-red-800);
         }
+        ;
+        --paper-drawer-panel-main-container: {
+          overflow-y: hidden;
+        }
+        ;
       }
-
+      
       #main-info > div {
         height: 250px;
       }
-
+      
       paper-button iron-icon {
         margin-top: -2px;
       }
+      
       .cards>::content iris-queuecard {
         margin: 10px;
         @apply(--layout-flex);
         min-width: 200px;
       }
+      
       .cards>::content paper-card .items-counter {
         font-size: 24px;
         padding: 10px;
       }
-
+      
       .doomclcok .card-content {
         font-size: 24px;
         text-align: center;
       }
-
+      
       paper-card.doomclcok {
         @apply(--layout-flex-2);
         min-width: 250px;
         margin: 10px;
       }
-
+      
       .ticket-action {
         padding: 0 10px 10px;
       }
-
+      
       .ticket-action paper-button {
         margin-top: 10px;
         font-size: 20px;
       }
-
+      
       paper-spinner {
         height: 20px;
         width: 20px;
         top: 2px;
       }
-
+      
       .break {
         float: left;
       }
-
+      
       .card-content iris-clock {
         float: right;
       }
-
+      
       .red {
         color: var(--mydoc-red-800);
       }
-
+      
       .cards {
         @apply(--layout);
         @apply(--layout-wrap);
       }
-
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
     <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
@@ -102,10 +108,12 @@
         <iris-queuecard id="live_queue" heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[r_count]]</span>
           <span class="button-name">список талонов</span>
+          <span class="list-caption">Список талонов</span>
         </iris-queuecard>
         <iris-queuecard id="postponed_queue" heading="Отложено" tickets="{{postponed_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
+          <span class="list-caption">Список отложенных талонов</span>
         </iris-queuecard>
         <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[showClock(isPaused,currentTicket)]]">
           <div class="card-content">
@@ -148,7 +156,7 @@
   </template>
 
   <script>
-    (function () {
+    (function() {
       'use strict';
 
       Polymer({
@@ -159,6 +167,22 @@
             observer: '_currentTicketChanged'
           }
         },
+        listeners: {
+          'iron-overlay-closed': 'afterCloseDialog',
+          'iron-overlay-opened': 'afterOpenDialog'
+        },
+        afterOpenDialog() {
+          //@NOTE: pretty hacky way to hide scrollbars when any dialog is open
+          document.querySelector('#headerPanelMain #mainContainer').style["overflow-y"] = "hidden";
+          let toolbar = document.querySelector('paper-toolbar');
+          toolbar.style.width = '100%';
+        },
+        afterCloseDialog() {
+          //@NOTE: resotre to normal
+          document.querySelector('#headerPanelMain #mainContainer').style["overflow-y"] = "auto";
+          let toolbar = document.querySelector('paper-toolbar');
+          toolbar.style.width = null;
+        },
         canOpenQueue(currentTicket) {
           return currentTicket.state !== 'called';
         },
@@ -167,9 +191,7 @@
         },
         _currentTicketChanged() {
           console.log('ticket changed');
-          let state = !_.isEmpty(this.currentTicket)
-            ? this.currentTicket.state
-            : 'no-state';
+          let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
           switch (state) {
             case 'registered':
               console.log('registered');
@@ -212,40 +234,36 @@
         },
         ready() {
 
-          let standart = [
-            {
-              label: "Действие",
-              caption: "Принять",
-              name: 'process',
-              transform: 'action'
-            }, {
-              label: "№ талона",
-              field: 'label'
-            }, {
-              label: 'Услуга',
-              field: 'service',
-              transform: (ticket) => {
-                let service_id = ticket.service;
-                return this.$.shared.get(service_id).label;
-              }
-            }, {
-              label: 'Число дел',
-              field: 'service_count'
-            }, {
-              label: 'ФИО',
-              field: 'fio',
-              transform: function (ticket) {
-                return ticket.client.fio;
-              }
+          let standart = [{
+            label: "Действие",
+            caption: "Принять",
+            name: 'process',
+            transform: 'action'
+          }, {
+            label: "№ талона",
+            field: 'label'
+          }, {
+            label: 'Услуга',
+            field: 'service',
+            transform: (ticket) => {
+              let service_id = ticket.service;
+              return this.$.shared.get(service_id).label;
             }
-          ];
-          this.$.live_queue.row_model = _.concat(standart, [
-            {
-              label: 'Время ожидания',
-              field: ['booking_date'],
-              transform: 'doomclock'
+          }, {
+            label: 'Число дел',
+            field: 'service_count'
+          }, {
+            label: 'ФИО',
+            field: 'fio',
+            transform: function(ticket) {
+              return ticket.client.fio;
             }
-          ]);
+          }];
+          this.$.live_queue.row_model = _.concat(standart, [{
+            label: 'Время ожидания',
+            field: ['booking_date'],
+            transform: 'doomclock'
+          }]);
 
           this.$.postponed_queue.row_model = standart;
           this.now = Date.now();
@@ -256,27 +274,27 @@
           let self = this;
 
           this.action_handlers = {
-            'next': function (ticket) {
+            'next': function(ticket) {
               return self.$.workstation.getNext();
             },
-            'call-again': function (ticket) {
+            'call-again': function(ticket) {
               return ticket.callAgain();
             },
-            'route': function (ticket) {
+            'route': function(ticket) {
               console.log('Open route dialog here');
               return Promise.resolve(true)
             },
-            'process': function (ticket) {
+            'process': function(ticket) {
               return self.$.workstation.getTicketById(ticket);
             },
-            'postpone': function (ticket) {
+            'postpone': function(ticket) {
               return self.$.workstation.postponeTicket(ticket);
             },
-            'default': function (ticket, action) {
+            'default': function(ticket, action) {
               let ticket_method = ticket[action];
-              if (!_.isFunction(ticket_method)) 
+              if (!_.isFunction(ticket_method))
                 return;
-              
+
               return ticket_method.call(ticket).then((r) => {
                 console.log('action %s result:', action, r);
                 // console.log('ticket now:', ticket);
@@ -304,17 +322,13 @@
           let action = data.action;
 
           let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
-          let spinner = button
-            ? button.querySelector('paper-spinner')
-            : false;
+          let spinner = button ? button.querySelector('paper-spinner') : false;
           if (button && spinner) {
             button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
           }
 
-          let done = this.action_handlers[action]
-            ? this.action_handlers[action](ticket)
-            : this.action_handlers.default(ticket, action);
+          let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
 
           if (button && spinner) {
             done.then(() => {
