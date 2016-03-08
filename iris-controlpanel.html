@@ -126,7 +126,7 @@
           </div>
         </paper-card>
       </div>
-      <iris-ticketview ticket="{{currentTicket}}" view="stateful">
+      <iris-ticketview id="viewer" ticket="{{currentTicket}}" view="stateful">
         <div class="ticket-action flexchild layout vertical">
           <paper-button ticket-action="next" class="btn-primary" raised elevation="0">
             Следующий
@@ -278,7 +278,7 @@
               return self.$.workstation.getNext();
             },
             'call-again': function(ticket) {
-              return ticket.callAgain();
+              return ticket.callAgain().finally(() => self.$.viewer.restoreButtonsState());
             },
             'route': function(ticket) {
               console.log('Open route dialog here');
@@ -336,6 +336,7 @@
             console.log('action complete', d);
           }).catch((d) => {
             console.log('action failed', d);
+            this.$.viewer.restoreButtonsState();
           }).then(() => {
             console.log('remove spinner');
             spinner.removeAttribute('active');
