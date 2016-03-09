@@ -96,9 +96,8 @@
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
     <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
-    <iris-settings-access id="settings"></iris-settings-access>
 
-    <iris-currentuser id="user" is-paused="{{isPaused}}"></iris-currentuser>
+    <iris-currentuser id="user" is-paused="{{isPaused}}" permissions="{{permissions}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
@@ -122,7 +121,7 @@
         <paper-card class="doomclcok" hidden$="[[!showClock(isPaused,currentTicket)]]">
           <div class="card-content">
             <div class="break red" hidden$="[[!isPaused]]">Перерыв</div>
-            <iris-clock timezone="Asia/Dhaka" current-time="{{now}}"></iris-clock>
+            <iris-clock></iris-clock>
           </div>
         </paper-card>
       </div>
@@ -166,6 +165,7 @@
             observer: '_currentTicketChanged'
           }
         },
+        observers: ['computeQueueFields(permissions)'],
         listeners: {
           'iron-overlay-closed': 'afterCloseDialog',
           'iron-overlay-opened': 'afterOpenDialog'
@@ -190,18 +190,18 @@
         },
         _currentTicketChanged(new_ticket, old_ticket) {
           if (new_ticket && old_ticket && new_ticket.id == old_ticket.id && new_ticket.state == old_ticket.state) return;
-          console.log('ticket changed', new_ticket, old_ticket);
+
           let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
           switch (state) {
             case 'registered':
-              console.log('registered');
+              // console.log('registered');
               this.set('doomclockHeading', 'Время ожидания');
               this.$.countdown.direction = 'up';
               this.$.countdown.start = this.currentTicket.booking_date;
               this.$.countdown.redZone = 0;
               break;
             case 'called':
-              console.log('called');
+              // console.log('called');
 
               this.set('doomclockHeading', 'Ожидание посетителя');
 
@@ -210,20 +210,19 @@
               this.$.countdown.redZone = _.floor(waiting_time * 0.3);
               this.$.countdown.start = waiting_time;
               this.$.countdown.direction = 'down';
-              this.lockArriveButton();
 
               break;
             case 'processing':
-              console.log('processing');
+              // console.log('processing');
               this.set('doomclockHeading', 'Время обслуживания');
-              this.$.countdown.direction = 'down';
 
               let time_of_service = (this.currentTicket.time_description[1] - this.currentTicket.time_description[0]) * 1000;
               this.$.countdown.redZone = _.floor(0.3 * time_of_service);
               this.$.countdown.start = time_of_service;
+              this.$.countdown.direction = 'down';
               break;
             case 'no-state':
-              console.log('no-state');
+              // console.log('no-state');
               this.$.countdown.direction = 'up';
               this.$.countdown.start = Date.now();
               this.$.countdown.redZone = 0;
@@ -232,14 +231,21 @@
           }
           this.$.countdown.restart();
         },
-        ready() {
-
-          let standart = [{
+        computeQueueFields(permissions) {
+          let actions = [{
             label: "Действие",
             caption: "Принять",
-            name: 'process',
+            name: 'byId',
             transform: 'action'
-          }, {
+          }];
+
+          let waiting_time = [{
+            label: 'Время ожидания',
+            field: ['booking_date'],
+            transform: 'doomclock'
+          }];
+
+          let standart = [{
             label: "№ талона",
             field: 'label'
           }, {
@@ -259,13 +265,17 @@
               return _.map(_.split(ticket.client.fio, ' '), word => _.upperFirst(word)).join(' ');
             }
           }];
-          this.$.live_queue.row_model = _.concat(standart, [{
-            label: 'Время ожидания',
-            field: ['booking_date'],
-            transform: 'doomclock'
-          }]);
 
-          this.$.postponed_queue.row_model = standart;
+          let can_call = permissions ? permissions["ticket-by-id"] || {} : {};
+
+          let live_fields = can_call["registered"] ? _.concat(actions, standart, waiting_time) : _.concat(standart, waiting_time);
+          this.$.live_queue.row_model = live_fields;
+
+          let postponed_fields = can_call["postponed"] ? _.concat(actions, standart) : standart;
+          this.$.postponed_queue.row_model = postponed_fields;
+        },
+        ready() {
+
           this.now = Date.now();
           this.doomclockHeading = 'Время ожидания';
           this.doomclockHidden = true;
@@ -288,7 +298,6 @@
               return self.$.workstation.getTicketById(ticket);
             },
             'postpone': function(ticket) {
-              self.cancelDebouncer('lock-arrive-button');
               return self.$.workstation.postponeTicket(ticket);
             },
             'default': function(ticket, action) {
@@ -296,16 +305,6 @@
             }
           };
 
-        },
-        lockArriveButton() {
-          let delay = this.$.settings.getItem('lock_delay');
-          if (delay) {
-            let button = this.querySelector('.ticket-action paper-button[ticket-action=arrived]');
-            button.setAttribute('disabled', true);
-            this.debounce('lock-arrive-button', () => {
-              button.removeAttribute('disabled');
-            }, delay * 1000);
-          }
         },
         ticketAction(e) {
           let data = e.detail;
@@ -321,6 +320,7 @@
           if (button && spinner) {
             // button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
+            spinner.removeAttribute('hidden');
           }
 
           let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
@@ -338,8 +338,8 @@
             console.log('action failed', d);
             this.$.viewer.restoreButtonsState();
           }).then(() => {
-            console.log('remove spinner');
             spinner.removeAttribute('active');
+            spinner.setAttribute('hidden', true);
             // button.removeAttribute('disabled');
           });
 
