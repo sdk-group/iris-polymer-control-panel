@@ -162,6 +162,7 @@
         properties: {
           currentTicket: {
             value: {},
+            notify: true,
             observer: '_currentTicketChanged'
           }
         },
@@ -244,6 +245,11 @@
             field: ['booking_date'],
             transform: 'doomclock'
           }];
+          let priorities = [{
+            label: '',
+            field: ['priority'],
+            transform: 'priority'
+          }];
 
           let standart = [{
             label: "№ талона",
@@ -268,10 +274,10 @@
 
           let can_call = permissions ? permissions["ticket-by-id"] || {} : {};
 
-          let live_fields = can_call["registered"] ? _.concat(actions, standart, waiting_time) : _.concat(standart, waiting_time);
+          let live_fields = can_call["registered"] ? _.concat(priorities, actions, standart, waiting_time) : _.concat(priorities, standart, waiting_time);
           this.$.live_queue.row_model = live_fields;
 
-          let postponed_fields = can_call["postponed"] ? _.concat(actions, standart) : standart;
+          let postponed_fields = can_call["postponed"] ? _.concat(priorities, actions, standart) : _.concat(priorities, standart);
           this.$.postponed_queue.row_model = postponed_fields;
         },
         ready() {
