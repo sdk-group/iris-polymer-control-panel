@@ -292,7 +292,7 @@
             label: 'ФИО',
             field: 'fio',
             transform: function(ticket) {
-              return _.map(_.split(ticket.client.fio, ' '), word => _.upperFirst(word)).join(' ');
+              return _.map(_.split(ticket.user_info.fio, ' '), word => _.upperFirst(word)).join(' ');
             }
           }];
 
