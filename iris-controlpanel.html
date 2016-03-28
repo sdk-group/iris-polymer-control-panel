@@ -30,6 +30,9 @@
         --paper-spinner-layer-2-color: var(--mydoc-red-800);
         --paper-spinner-layer-3-color: var(--mydoc-brown-1000);
         --paper-spinner-layer-4-color: var(--mydoc-beige-1000);
+        --paper-button-flat-keyboard-focus: {
+          font-weight: normal;
+        }
       }
       
       #main-info > div {
@@ -92,6 +95,10 @@
       .cards {
         @apply(--layout);
         @apply(--layout-wrap);
+      }
+      
+      .ticket-action.keyboard-focus {
+        font-weight: normal;
       }
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
