@@ -68,6 +68,7 @@
       
       .ticket-action {
         padding: 0 10px 10px;
+        @apply(--layout-vertical);
       }
       
       .ticket-action paper-button {
@@ -137,7 +138,7 @@
         </paper-card>
       </div>
       <iris-ticketview id="viewer" ticket="{{currentTicket}}" view="stateful">
-        <div class="ticket-action flexchild layout vertical">
+        <div class="ticket-action ">
           <paper-button ticket-action="next" class="btn-primary" raised elevation="0" tabindex="-1">
             Следующий
             <paper-spinner hidden alt="Loading"></paper-spinner>
