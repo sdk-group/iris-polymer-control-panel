@@ -1,0 +1,39 @@
+<script>
+  (function() {
+    'use strict'
+
+    window.IrisBehaviors = window.IrisBehaviors || {};
+
+    IrisBehaviors.ActionButtonsBehvior = {
+      getActionName(str) {
+        let name = _.upperFirst(_.camelCase(str));
+        return `action${name}`
+      },
+      actionNext(ticket) {
+        return this.$.workstation.getNext();
+      },
+      actionCallAgain(ticket) {
+        return ticket.callAgain().finally(() => this.$.viewer.restoreButtonsState());
+      },
+      actionRoute(ticket) {
+        this.$.routing.show();
+        return Promise.resolve(true)
+      },
+      actionProcess(ticket) {
+        return this.$.workstation.getTicketById(ticket);
+      },
+      actionPostpone(ticket) {
+        return this.$.workstation.postponeTicket(ticket);
+      },
+      actionDefault(ticket, action) {
+        return this.$.workstation.performTicketAction(ticket, action);
+      },
+      doAction(ticket, action) {
+        let name = this.getActionName(action);
+        console.log(name, action, ticket);
+        return _.isFunction(this[name]) ? this[name](ticket) : this.actionDefault(ticket, action)
+      }
+    };
+
+  })();
+</script>

@@ -14,6 +14,9 @@
 <link rel="import" href="../../bower_components/iris-polymer-clock/iris-clock.html">
 <link rel="import" href="../../bower_components/iris-polymer-styles/iris-mydocs-styles.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iris-polymer-routing-dialog/iris-routing-dialog.html">
+
+<link rel="import" href="iris-action-buttons-behavior.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -36,7 +39,7 @@
         }
       }
       
-      #main-info > div {
+      #main-info> div {
         height: 250px;
       }
       
@@ -109,6 +112,8 @@
     <iris-currentuser id="user" is-paused="{{isPaused}}" permissions="{{permissions}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
+    <iris-routing-dialog id="routing"></iris-routing-dialog>
+
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards">
         <content select="iris-queuecard"></content>
@@ -179,6 +184,7 @@
           }
         },
         observers: ['computeQueueFields(permissions)'],
+        behaviors: [window.IrisBehaviors.ActionButtonsBehvior],
         listeners: {
           'iron-overlay-closed': 'afterCloseDialog',
           'iron-overlay-opened': 'afterOpenDialog'
@@ -236,7 +242,6 @@
               break;
             case 'called':
               // console.log('called');
-
               this.set('doomclockHeading', 'Ожидание посетителя');
 
               let waiting_time = this.$.office.get('live_autopostpone') * 1000;
@@ -314,38 +319,12 @@
           this.$.postponed_queue.row_model = postponed_fields;
         },
         ready() {
-
           this.now = Date.now();
           this.doomclockHeading = 'Время ожидания';
           this.doomclockHidden = true;
           this.request_in_progress = false;
-
-          let self = this;
-
-          this.action_handlers = {
-            'next': function(ticket) {
-              return self.$.workstation.getNext();
-            },
-            'call-again': function(ticket) {
-              return ticket.callAgain().finally(() => self.$.viewer.restoreButtonsState());
-            },
-            'route': function(ticket) {
-              console.log('Open route dialog here');
-              return Promise.resolve(true)
-            },
-            'process': function(ticket) {
-              return self.$.workstation.getTicketById(ticket);
-            },
-            'postpone': function(ticket) {
-              //@FIXIT: rework it, please! ASAP!
-              return self.$.workstation.postponeTicket(ticket);
-            },
-            'default': function(ticket, action) {
-              return self.$.workstation.performTicketAction(ticket, action);
-            }
-          };
-
         },
+
         ticketAction(e) {
           let data = e.detail;
           let ticket = data.ticket;
@@ -363,7 +342,7 @@
             spinner.removeAttribute('hidden');
           }
 
-          let done = this.action_handlers[action] ? this.action_handlers[action](ticket) : this.action_handlers.default(ticket, action);
+          let done = this.doAction(ticket, action);
 
           done.then(() => {
             this.$.live_queue.closeList();
@@ -380,7 +359,6 @@
           }).then(() => {
             spinner.removeAttribute('active');
             spinner.setAttribute('hidden', true);
-            // button.removeAttribute('disabled');
           });
 
         }
