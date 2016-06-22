@@ -52,9 +52,21 @@
           'service-30': ['pc-1', 'pc-2', 'pc-3'],
           'service-4': ['pc-1', 'pc-2', 'pc-3']
         };
-        return Promise.resolve(mock_routs).delay(1000).then((routs) => {
-          return this.$.routing.show(routs)
-        })
+        let mock_ticket = {
+          service: 'service-4'
+        };
+        let requestRouts = Promise.resolve(mock_routs).delay(200);
+
+        return requestRouts.then((routs) => {
+          return this.$.routing.show(routs, mock_ticket)
+        }).then((route) => {
+          if (!route) return false;
+
+          //NOTE@: MOCK!          
+          return console.log('Routing to:', route);
+
+          return this.$.workstation.routeTicket(ticket, route);
+        }).finally(() => this.$.viewer.restoreButtonsState());
       },
       actionProcess(ticket) {
         return this.$.workstation.getTicketById(ticket);
@@ -67,7 +79,6 @@
       },
       doAction(ticket, action) {
         let name = this.getActionName(action);
-        console.log(name, action, ticket);
         return _.isFunction(this[name]) ? this[name](ticket) : this.actionDefault(ticket, action)
       }
     };
