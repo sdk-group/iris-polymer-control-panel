@@ -16,53 +16,20 @@
         return ticket.callAgain().finally(() => this.$.viewer.restoreButtonsState());
       },
       actionRoute(ticket) {
-        let mock_routs = {
-          'service-1': ['pc-1', 'pc-2', 'pc-3'],
-          'service-2': ['pc-1', 'pc-2', 'pc-3'],
-          'service-3': ['pc-1', 'pc-2', 'pc-3'],
-          'service-11': ['pc-1', 'pc-2', 'pc-3'],
-          'service-21': ['pc-1', 'pc-2', 'pc-3'],
-          'service-31': ['pc-1', 'pc-2', 'pc-3'],
-          'service-12': ['pc-1', 'pc-2', 'pc-3'],
-          'service-22': ['pc-1', 'pc-2', 'pc-3'],
-          'service-32': ['pc-1', 'pc-2', 'pc-3'],
-          'service-13': ['pc-1', 'pc-2', 'pc-3'],
-          'service-23': ['pc-1', 'pc-2', 'pc-3'],
-          'service-33': ['pc-1', 'pc-2', 'pc-3'],
-          'service-14': ['pc-1', 'pc-2', 'pc-3'],
-          'service-24': ['pc-1', 'pc-2', 'pc-3'],
-          'service-34': ['pc-1', 'pc-2', 'pc-3'],
-          'service-15': ['pc-1', 'pc-2', 'pc-3'],
-          'service-25': ['pc-1', 'pc-2', 'pc-3'],
-          'service-35': ['pc-1', 'pc-2', 'pc-3'],
-          'service-16': ['pc-1', 'pc-2', 'pc-3'],
-          'service-26': ['pc-1', 'pc-2', 'pc-3'],
-          'service-36': ['pc-1', 'pc-2', 'pc-3'],
-          'service-17': ['pc-1', 'pc-2', 'pc-3'],
-          'service-27': ['pc-1', 'pc-2', 'pc-3'],
-          'service-37': ['pc-1', 'pc-2', 'pc-3'],
-          'service-18': ['pc-1', 'pc-2', 'pc-3'],
-          'service-28': ['pc-1', 'pc-2', 'pc-3'],
-          'service-38': ['pc-1', 'pc-2', 'pc-3'],
-          'service-19': ['pc-1', 'pc-2', 'pc-3'],
-          'service-29': ['pc-1', 'pc-2', 'pc-3'],
-          'service-39': ['pc-1', 'pc-2', 'pc-3'],
-          'service-10': ['pc-1', 'pc-2', 'pc-3'],
-          'service-20': ['pc-1', 'pc-2', 'pc-3'],
-          'service-30': ['pc-1', 'pc-2', 'pc-3'],
-          'service-4': ['pc-1', 'pc-2', 'pc-3']
-        };
         let mock_ticket = {
-          service: 'service-4'
+          service: "service-1",
+          getId() {
+            return 'ticket-department-1-2016-05-24--0'
+          }
         };
-        let requestRouts = Promise.resolve(mock_routs).delay(200);
+        let requestRouts = this.$.workstation.getAvailableRoutes(mock_ticket);
 
-        return requestRouts.then((routs) => {
-          return this.$.routing.show(routs, mock_ticket)
+        return requestRouts.then((data) => {
+          return this.$.routing.show(data, mock_ticket)
         }).then((route) => {
           if (!route) return false;
 
-          //NOTE@: MOCK!          
+          //NOTE@: MOCK!
           return console.log('Routing to:', route);
 
           return this.$.workstation.routeTicket(ticket, route);
