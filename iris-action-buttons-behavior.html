@@ -16,21 +16,13 @@
         return ticket.callAgain().finally(() => this.$.viewer.restoreButtonsState());
       },
       actionRoute(ticket) {
-        let mock_ticket = {
-          service: "service-1",
-          getId() {
-            return 'ticket-department-1-2016-05-24--0'
-          }
-        };
-        let requestRouts = this.$.workstation.getAvailableRoutes(mock_ticket);
+
+        let requestRouts = this.$.workstation.getAvailableRoutes(ticket);
 
         return requestRouts.then((data) => {
-          return this.$.routing.show(data, mock_ticket)
+          return this.$.routing.show(data, ticket)
         }).then((route) => {
           if (!route) return false;
-
-          //NOTE@: MOCK!
-          return console.log('Routing to:', route);
 
           return this.$.workstation.routeTicket(ticket, route);
         }).finally(() => this.$.viewer.restoreButtonsState());
