@@ -38,70 +38,70 @@
           @apply(--shadow-elevation-2dp);
         }
       }
-      
+
       #main-info> div {
         height: 250px;
       }
-      
+
       paper-button iron-icon {
         margin-top: -2px;
       }
-      
+
       .cards>::content iris-queuecard {
         margin: 10px;
         @apply(--layout-flex);
         min-width: 200px;
       }
-      
+
       .cards>::content paper-card .items-counter {
         font-size: 24px;
         padding: 10px;
       }
-      
+
       .doomclcok .card-content {
         font-size: 24px;
         text-align: center;
       }
-      
+
       paper-card.doomclcok {
         @apply(--layout-flex-2);
         min-width: 250px;
         margin: 10px;
       }
-      
+
       .ticket-action {
         padding: 0 10px 10px;
         @apply(--layout-vertical);
       }
-      
+
       .ticket-action paper-button {
         margin-top: 10px;
         font-size: 20px;
       }
-      
+
       paper-spinner {
         height: 20px;
         width: 20px;
         top: 2px;
       }
-      
+
       .break {
         float: left;
       }
-      
+
       .card-content iris-clock {
         float: right;
       }
-      
+
       .red {
         color: var(--mydoc-red-800);
       }
-      
+
       .cards {
         @apply(--layout);
         @apply(--layout-wrap);
       }
-      
+
       .ticket-action.keyboard-focus {
         font-weight: normal;
       }
@@ -168,6 +168,7 @@
       </iris-ticketview>
     </div>
 
+    <iris-office-status></iris-office-status>
   </template>
 
   <script>
