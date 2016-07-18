@@ -39,7 +39,7 @@
         }
       }
 
-      #main-info> div {
+      #main-info > div {
         height: 250px;
       }
 
@@ -47,13 +47,13 @@
         margin-top: -2px;
       }
 
-      .cards>::content iris-queuecard {
+      .cards > ::content iris-queuecard {
         margin: 10px;
         @apply(--layout-flex);
         min-width: 200px;
       }
 
-      .cards>::content paper-card .items-counter {
+      .cards > ::content paper-card .items-counter {
         font-size: 24px;
         padding: 10px;
       }
@@ -105,6 +105,7 @@
       .ticket-action.keyboard-focus {
         font-weight: normal;
       }
+
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
     <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
@@ -172,7 +173,7 @@
   </template>
 
   <script>
-    (function() {
+    (function () {
       'use strict';
 
       Polymer({
@@ -212,27 +213,37 @@
           return is_iddle || is_specific_history;
         },
         staticCardHeaing(paused, currentTicket) {
-          if (paused || !currentTicket.state) return null;
-          if (currentTicket.is_postopned) return 'Был отложен';
-          if (currentTicket.is_prebook) return 'Предварительная запись';
-        },
+          if (paused || !currentTicket.state)
+            return null;
+          if (currentTicket.is_postopned)
+            return 'Был отложен';
+          if (currentTicket.is_prebook)
+            return 'Предварительная запись';
+          }
+        ,
         showStaticClock(paused, currentTicket) {
           return !(currentTicket.is_prebook || currentTicket.is_postopned) || paused;
         },
         computePrebookTime(currentTicket) {
-          if (_.isEmpty(currentTicket) || currentTicket.is_postopned || currentTicket.state != "registered") return '';
+          if (_.isEmpty(currentTicket) || currentTicket.is_postopned || currentTicket.state != "registered")
+            return '';
 
           let time = currentTicket.time_description[0];
           let hours = _.floor(time / (60 * 60));
           let mins = _.floor((time % 3600) / 60);
-          mins = mins.toString().length == 1 ? '0' + mins : mins;
+          mins = mins.toString().length == 1
+            ? '0' + mins
+            : mins;
 
           return `на ${hours}:${mins}`;
         },
         _currentTicketChanged(new_ticket, old_ticket) {
-          if (new_ticket && old_ticket && new_ticket.id == old_ticket.id && new_ticket.state == old_ticket.state) return;
+          if (new_ticket && old_ticket && new_ticket.id == old_ticket.id && new_ticket.state == old_ticket.state)
+            return;
 
-          let state = !_.isEmpty(this.currentTicket) ? this.currentTicket.state : 'no-state';
+          let state = !_.isEmpty(this.currentTicket)
+            ? this.currentTicket.state
+            : 'no-state';
           switch (state) {
             case 'registered':
               // console.log('registered');
@@ -272,51 +283,65 @@
           this.$.countdown.restart();
         },
         computeQueueFields(permissions) {
-          let actions = [{
-            label: "Действие",
-            caption: "Принять",
-            name: 'byId',
-            transform: 'action'
-          }];
-
-          let waiting_time = [{
-            label: 'Время ожидания',
-            field: ['booking_date'],
-            transform: 'doomclock'
-          }];
-          let priorities = [{
-            label: '',
-            field: ['priority'],
-            transform: 'priority'
-          }];
-
-          let standart = [{
-            label: "№ талона",
-            field: 'label'
-          }, {
-            label: 'Услуга',
-            field: 'service',
-            transform: (ticket) => {
-              let service_id = ticket.service;
-              return this.$.shared.get(service_id).label;
+          let actions = [
+            {
+              label: "Действие",
+              caption: "Принять",
+              name: 'byId',
+              transform: 'action'
             }
-          }, {
-            label: 'Число дел',
-            field: 'service_count'
-          }, {
-            label: 'ФИО',
-            field: 'fio',
-            transform: function(ticket) {
-              return _.map(_.split(ticket.user_info.fio, ' '), word => _.upperFirst(word)).join(' ');
+          ];
+
+          let waiting_time = [
+            {
+              label: 'Время ожидания',
+              field: ['booking_date'],
+              transform: 'doomclock'
             }
-          }];
+          ];
+          let priorities = [
+            {
+              label: '',
+              field: ['priority'],
+              transform: 'priorities'
+            }
+          ];
 
-          let can_call = permissions ? permissions["ticket-by-id"] || {} : {};
+          let standart = [
+            {
+              label: "№ талона",
+              field: 'label'
+            }, {
+              label: 'Услуга',
+              field: 'service',
+              transform: (ticket) => {
+                let service_id = ticket.service;
+                return this.$.shared.get(service_id).label;
+              }
+            }, {
+              label: 'Число дел',
+              field: 'service_count'
+            }, {
+              label: 'ФИО',
+              field: 'fio',
+              transform: function (ticket) {
+                return _.map(_.split(ticket.user_info.fio, ' '), word => _.upperFirst(word)).join(' ');
+              }
+            }
+          ];
 
-          let live_fields = can_call["registered"] ? _.concat(priorities, actions, standart, waiting_time) : _.concat(priorities, standart, waiting_time);
+          let can_call = permissions
+            ? permissions["ticket-by-id"] || {}
+            : {};
+
+          let live_fields = can_call["registered"]
+            ? _.concat(priorities, actions, standart, waiting_time)
+            : _.concat(priorities, standart, waiting_time);
           this.$.live_queue.row_model = live_fields;
 
-          let postponed_fields = can_call["postponed"] ? _.concat(priorities, actions, standart) : _.concat(priorities, standart);
+          let postponed_fields = can_call["postponed"]
+            ? _.concat(priorities, actions, standart)
+            : _.concat(priorities, standart);
           this.$.postponed_queue.row_model = postponed_fields;
         },
         ready() {
@@ -336,7 +361,9 @@
           let all_action_buttons = this.querySelectorAll('.ticket-action paper-button');
           _.forEach(all_action_buttons, b => b.setAttribute('disabled', true));
 
-          let spinner = button ? button.querySelector('paper-spinner') : false;
+          let spinner = button
+            ? button.querySelector('paper-spinner')
+            : false;
           if (button && spinner) {
             // button.setAttribute('disabled', true);
             spinner.setAttribute('active', true);
@@ -350,7 +377,8 @@
             this.$.postponed_queue.closeList();
           });
 
-          if (!button || !spinner) return true;
+          if (!button || !spinner)
+            return true;
 
           done.then((d) => {
             console.log('action complete', d);
