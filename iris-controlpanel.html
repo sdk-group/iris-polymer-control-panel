@@ -178,6 +178,7 @@
 
       Polymer({
         is: 'iris-controlpanel',
+        behaviors: [window.IrisBehaviors.ActionButtonsBehvior],
         properties: {
           currentTicket: {
             value: {},
@@ -186,10 +187,18 @@
           }
         },
         observers: ['computeQueueFields(permissions)'],
-        behaviors: [window.IrisBehaviors.ActionButtonsBehvior],
         listeners: {
           'iron-overlay-closed': 'afterCloseDialog',
           'iron-overlay-opened': 'afterOpenDialog'
+        },
+        actionProcess(ticket) {
+          return this.$.workstation.getTicketById(ticket);
+        },
+        actionPostpone(ticket) {
+          return this.$.workstation.postponeTicket(ticket);
+        },
+        actionDefault(ticket, action) {
+          return this.$.workstation.performTicketAction(ticket, action);
         },
         afterOpenDialog() {
           //@NOTE: pretty hacky way to hide scrollbars when any dialog is open
@@ -349,48 +358,8 @@
           this.doomclockHeading = 'Время ожидания';
           this.doomclockHidden = true;
           this.request_in_progress = false;
-        },
-
-        ticketAction(e) {
-          let data = e.detail;
-          let ticket = data.ticket;
-          let action = data.action;
-
-          let button = this.querySelector('.ticket-action paper-button[ticket-action=' + action + ']');
-
-          let all_action_buttons = this.querySelectorAll('.ticket-action paper-button');
-          _.forEach(all_action_buttons, b => b.setAttribute('disabled', true));
-
-          let spinner = button
-            ? button.querySelector('paper-spinner')
-            : false;
-          if (button && spinner) {
-            // button.setAttribute('disabled', true);
-            spinner.setAttribute('active', true);
-            spinner.removeAttribute('hidden');
-          }
-
-          let done = this.doAction(ticket, action);
-
-          done.then(() => {
-            this.$.live_queue.closeList();
-            this.$.postponed_queue.closeList();
-          });
-
-          if (!button || !spinner)
-            return true;
-
-          done.then((d) => {
-            console.log('action complete', d);
-          }).catch((d) => {
-            console.log('action failed', d);
-            this.$.viewer.restoreButtonsState();
-          }).then(() => {
-            spinner.removeAttribute('active');
-            spinner.setAttribute('hidden', true);
-          });
-
         }
+
       });
     })();
   </script>
