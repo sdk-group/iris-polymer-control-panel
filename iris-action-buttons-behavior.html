@@ -9,14 +9,21 @@
         let name = _.upperFirst(_.camelCase(str));
         return `action${name}`
       },
+      actionDefault(ticket, action) {
+        let name = _.camelCase(action);
+        return this.$.workstation.performTicketAction(ticket, name);
+      },
       actionNext(ticket) {
         return this.$.workstation.getNext();
       },
       actionCallAgain(ticket) {
         return ticket.callAgain(). finally(() => this.$.viewer.restoreButtonsState());
       },
-      actionRoute(ticket) {
-        let requestRouts = this.$.workstation.getAvailableRoutes(ticket);
+      actionRouteAdmin(ticket) {
+        return this.actionRoute(ticket, true);
+      },
+      actionRoute(ticket, ignore_routs) {
+        let requestRouts = this.$.workstation.getAvailableRoutes(ticket, ignore_routs);
 
         return requestRouts.then((data) => {
           return this.$.routing.show(data, ticket)
@@ -26,6 +33,11 @@
 
           return this.$.workstation.routeTicket(ticket, route);
         }). finally(() => this.$.viewer.restoreButtonsState());
+      },
+      routeTicket(ticket, route) {
+        return workstation
+          ? workstation.routeTicket(ticket, route)
+          : Promise.reject();
       },
       doAction(ticket, action) {
         let name = this.getActionName(action);
@@ -54,9 +66,11 @@
 
         let done = this.doAction(ticket, action);
 
+        //@FIXIT: rework all sequences
+        //
         done.then(() => {
-          this.$.live_queue.closeList();
-          this.$.postponed_queue.closeList();
+          this.$.live_queue && this.$.live_queue.closeList();
+          this.$.postponed_queue && this.$.postponed_queue.closeList();
         });
 
         if (!button || !spinner)

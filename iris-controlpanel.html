@@ -145,23 +145,23 @@
       </div>
       <iris-ticketview id="viewer" ticket="{{currentTicket}}" view="stateful">
         <div class="ticket-action ">
-          <paper-button ticket-action="next" class="btn-primary" raised elevation="0" tabindex="-1">
+          <paper-button ticket-action="next" class="btn-primary" tabindex="-1" onkeydown="return false" onkeypress="return false" raised elevation="0">
             Следующий
             <paper-spinner hidden alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0" tabindex="-1">
+          <paper-button ticket-action="arrived" class="btn-primary" raised elevation="0" tabindex="-1" onkeydown="return false" onkeypress="return false">
             Подошел
             <paper-spinner hidden alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0" tabindex="-1">
+          <paper-button ticket-action="call-again" class="btn-primary" raised elevation="0" tabindex="-1" onkeydown="return false" onkeypress="return false">
             Повтор вызова
             <paper-spinner hidden alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0" tabindex="-1">
+          <paper-button ticket-action="postpone" class="btn-primary" raised elevation="0" tabindex="-1" onkeydown="return false" onkeypress="return false">
             Отложить
             <paper-spinner hidden alt="Loading"></paper-spinner>
           </paper-button>
-          <paper-button ticket-action="route" class="btn-primary" raised elevation="0" tabindex="-1">
+          <paper-button ticket-action="route" class="btn-primary" raised elevation="0" tabindex="-1" onkeydown="return false" onkeypress="return false">
             Передать
             <paper-spinner hidden alt="Loading"></paper-spinner>
           </paper-button>
@@ -197,9 +197,7 @@
         actionPostpone(ticket) {
           return this.$.workstation.postponeTicket(ticket);
         },
-        actionDefault(ticket, action) {
-          return this.$.workstation.performTicketAction(ticket, action);
-        },
+
         afterOpenDialog() {
           //@NOTE: pretty hacky way to hide scrollbars when any dialog is open
           document.querySelector('#headerPanelMain #mainContainer').style["overflow-y"] = "hidden";
