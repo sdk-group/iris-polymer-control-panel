@@ -71,6 +71,8 @@
         done.then(() => {
           this.$.live_queue && this.$.live_queue.closeList();
           this.$.postponed_queue && this.$.postponed_queue.closeList();
+        }).catch(() => {
+          /*SILENCE*/
         });
 
         if (!button || !spinner)
@@ -80,7 +82,7 @@
           console.log('action complete', d);
           this.fire('button-action-complete', d);
         }).catch((d) => {
-          console.log('action failed', d);
+          // console.log('action failed', d);
           this.fire('button-action-failed', d);
           this.$.viewer.restoreButtonsState();
         }).then(() => {
