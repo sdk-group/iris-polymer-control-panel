@@ -143,7 +143,7 @@
           </div>
         </paper-card>
       </div>
-      <iris-ticketview id="viewer" ticket="{{currentTicket}}" view="stateful">
+      <iris-ticketview id="viewer" ticket="{{currentTicket}}" tickets-pack="{{currentTicketsPack}}" view="stateful">
         <div class="ticket-action ">
           <paper-button ticket-action="next" class="btn-primary" tabindex="-1" onkeydown="return false" onkeypress="return false" raised elevation="0">
             Следующий
@@ -184,6 +184,10 @@
             value: {},
             notify: true,
             observer: '_currentTicketChanged'
+          },
+          currentTicketsPack: {
+            type: Array,
+            value: []
           }
         },
         observers: ['computeQueueFields(permissions)'],
@@ -288,6 +292,16 @@
               break;
           }
           this.$.countdown.restart();
+
+          if (this.currentTicket && this.currentTicket.pack_member && this.currentTicket.session) {
+            let session = this.currentTicket.session;
+            this.$.workstation.getSessionTickets({session: session})
+              .then(ticketsPack => {
+                this.currentTicketsPack = ticketsPack;
+              });
+          } else {
+            this.currentTicketsPack = [];
+          }
         },
         computeQueueFields(permissions) {
           let actions = [
