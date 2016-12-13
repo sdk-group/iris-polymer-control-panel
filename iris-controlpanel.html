@@ -201,7 +201,6 @@
         actionPostpone(ticket) {
           return this.$.workstation.postponeTicket(ticket);
         },
-
         afterOpenDialog() {
           //@NOTE: pretty hacky way to hide scrollbars when any dialog is open
           document.querySelector('#headerPanelMain #mainContainer').style["overflow-y"] = "hidden";
@@ -224,29 +223,26 @@
           return is_iddle || is_specific_history;
         },
         staticCardHeaing(paused, currentTicket) {
-          if (paused || !currentTicket.state)
+          if (paused || !currentTicket.state) {
             return null;
-          if (currentTicket.is_postopned)
+          }
+          if (currentTicket.is_postopned) {
             return 'Был отложен';
-          if (currentTicket.is_prebook)
+          }
+          if (currentTicket.is_prebook) {
             return 'Предварительная запись';
           }
-        ,
+
+        },
         showStaticClock(paused, currentTicket) {
           return !(currentTicket.is_prebook || currentTicket.is_postopned) || paused;
         },
         computePrebookTime(currentTicket) {
-          if (_.isEmpty(currentTicket) || currentTicket.is_postopned || currentTicket.state != "registered")
-            return '';
+          let no_caption = _.isEmpty(currentTicket) || currentTicket.is_postopned || currentTicket.state != "registered";
 
-          let time = currentTicket.time_description[0];
-          let hours = _.floor(time / (60 * 60));
-          let mins = _.floor((time % 3600) / 60);
-          mins = mins.toString().length == 1
-            ? '0' + mins
-            : mins;
-
-          return `на ${hours}:${mins}`;
+          return no_caption
+            ? ''
+            : `на ${currentTicket.prebook_time.start}`;
         },
         _currentTicketChanged(new_ticket, old_ticket) {
           if (new_ticket && old_ticket && new_ticket.id == old_ticket.id && new_ticket.state == old_ticket.state)
@@ -373,6 +369,7 @@
         }
 
       });
+
     })();
   </script>
 

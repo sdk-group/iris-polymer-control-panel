@@ -25,10 +25,8 @@
       actionRoute(ticket, ignore_routs) {
         let requestRouts = this.$.workstation.getAvailableRoutes(ticket, ignore_routs);
 
-        return requestRouts.then((data) => {
-          return this.$.routing.show(data, ticket)
-        }).then((route) => {
-          if (!route)
+        return requestRouts.then((data) => this.$.routing.show(data, ticket)).then((route) => {
+          if (!route) 
             return false;
 
           return this.$.workstation.routeTicket(ticket, route);
