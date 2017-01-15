@@ -17,6 +17,7 @@
 <link rel="import" href="../../bower_components/iris-polymer-routing-dialog/iris-routing-dialog.html">
 
 <link rel="import" href="iris-action-buttons-behavior.html">
+<link rel="import" href="pack-dialog.html">
 
 <dom-module id="iris-controlpanel">
   <template>
@@ -109,30 +110,38 @@
     </style>
     <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
     <iris-shared-entities id="office" namespace="office"></iris-shared-entities>
+    <iris-shared-entities namespace="timezone" key="name" value="{{timezone}}"></iris-shared-entities>
+    <iris-shared-entities namespace="timezone" key="offset" value="{{offset}}"></iris-shared-entities>
 
     <iris-currentuser id="user" is-paused="{{isPaused}}" permissions="{{permissions}}"></iris-currentuser>
     <iris-workstation id="workstation" queue-head="{{queue_head}}" postponed-head="{{postponed_head}}" current-ticket="{{currentTicket}}" postponed-count="{{p_count}}" reserved-count="{{r_count}}"></iris-workstation>
 
     <iris-routing-dialog id="routing"></iris-routing-dialog>
 
+    <pack-dialog id="packDialog" pack="[[currentTicketsPack]]"></pack-dialog>
+
     <div class="ticket-actions-interceptor" on-ticket-action="ticketAction">
       <div class="cards">
         <content select="iris-queuecard"></content>
+
         <iris-queuecard id="live_queue" heading="В очереди" tickets="{{queue_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[r_count]]</span>
           <span class="button-name">список талонов</span>
           <span class="list-caption">Список талонов</span>
         </iris-queuecard>
+
         <iris-queuecard id="postponed_queue" heading="Отложено" tickets="{{postponed_head}}" active="[[canOpenQueue(currentTicket)]]">
           <span class="items-counter">[[p_count]]</span>
           <span class="button-name">список отложенных</span>
           <span class="list-caption">Список отложенных талонов</span>
         </iris-queuecard>
+
         <paper-card class="doomclcok" heading="{{doomclockHeading}}" hidden$="[[showStaticCard(isPaused,currentTicket)]]">
           <div class="card-content">
             <iris-doomclock id="countdown"></iris-doomclock>
           </div>
         </paper-card>
+
         <paper-card class="doomclcok" heading="{{staticCardHeaing(isPaused,currentTicket)}}" hidden$="[[!showStaticCard(isPaused,currentTicket)]]">
           <div class="card-content">
             <div class="break red" hidden$="[[!isPaused]]">Перерыв</div>
@@ -142,8 +151,9 @@
             </div>
           </div>
         </paper-card>
+
       </div>
-      <iris-ticketview id="viewer" ticket="{{currentTicket}}" tickets-pack="{{currentTicketsPack}}" view="stateful">
+      <iris-ticketview id="viewer" ticket="{{currentTicket}}" on-show-pack="showPack" view="stateful">
         <div class="ticket-action ">
           <paper-button ticket-action="next" class="btn-primary" tabindex="-1" onkeydown="return false" onkeypress="return false" raised elevation="0">
             Следующий
@@ -184,16 +194,27 @@
             value: {},
             notify: true,
             observer: '_currentTicketChanged'
-          },
-          currentTicketsPack: {
-            type: Array,
-            value: []
           }
         },
         observers: ['computeQueueFields(permissions)'],
         listeners: {
           'iron-overlay-closed': 'afterCloseDialog',
           'iron-overlay-opened': 'afterOpenDialog'
+        },
+        showPack() {
+          this.getPack().then(ticketsPack => {
+            this.currentTicketsPack = ticketsPack;
+            this.$.packDialog.open();
+          });
+        },
+        getPack() {
+          if (!(this.currentTicket && this.currentTicket.pack_member && this.currentTicket.session)) {
+            return Promise.resolve([]);
+          }
+
+          let session = this.currentTicket.session;
+
+          return this.$.workstation.getSessionTickets({session: session});
         },
         actionProcess(ticket) {
           return this.$.workstation.getTicketById(ticket);
@@ -273,8 +294,10 @@
             case 'processing':
               // console.log('processing');
               this.set('doomclockHeading', 'Время обслуживания');
-
-              let time_of_service = (this.currentTicket.time_description[1] - this.currentTicket.time_description[0]) * 1000;
+              let now = moment(Date.now() - this.offset).tz(this.timezone).diff(moment.tz(this.timezone).startOf('day'), 'seconds');
+              let start = _.max([this.currentTicket.time_description[0], now]);
+              console.log(now, this.currentTicket.time_description);
+              let time_of_service = (this.currentTicket.time_description[1] - start) * 1000;
               this.$.countdown.redZone = _.floor(0.3 * time_of_service);
               this.$.countdown.start = time_of_service;
               this.$.countdown.direction = 'down';
@@ -288,16 +311,6 @@
               break;
           }
           this.$.countdown.restart();
-
-          if (this.currentTicket && this.currentTicket.pack_member && this.currentTicket.session) {
-            let session = this.currentTicket.session;
-            this.$.workstation.getSessionTickets({session: session})
-              .then(ticketsPack => {
-                this.currentTicketsPack = ticketsPack;
-              });
-          } else {
-            this.currentTicketsPack = [];
-          }
         },
         computeQueueFields(permissions) {
           let actions = [
@@ -351,15 +364,17 @@
             ? permissions["ticket-by-id"] || {}
             : {};
 
+          console.log('permissions', can_call);
+
           let live_fields = can_call["registered"]
             ? _.concat(priorities, actions, standart, waiting_time)
             : _.concat(priorities, standart, waiting_time);
-          this.$.live_queue.row_model = live_fields;
+          this.$.live_queue.set('row_model', live_fields);
 
           let postponed_fields = can_call["postponed"]
             ? _.concat(priorities, actions, standart)
             : _.concat(priorities, standart);
-          this.$.postponed_queue.row_model = postponed_fields;
+          this.$.postponed_queue.set('row_model', postponed_fields);
         },
         ready() {
           this.now = Date.now();
@@ -367,7 +382,6 @@
           this.doomclockHidden = true;
           this.request_in_progress = false;
         }
-
       });
 
     })();

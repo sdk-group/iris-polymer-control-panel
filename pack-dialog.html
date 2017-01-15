@@ -1,0 +1,93 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="pack-dialog">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      #dialog {
+        width: 100%;
+        top: 64px;
+        bottom: 0;
+        margin: 0;
+        border-top: 3px solid #E44E34;
+        @apply(--layout-vertical);
+      }
+
+      .dialog-head {
+        text-align: left;
+        font-size: 19px;
+        padding-left: 15px;
+        position: relative;
+        margin-top: 10px;
+      }
+
+      paper-fab {
+        border-radius: 3px;
+        background-color: rgba(0, 0, 0, 0.0);
+        border: 3px solid #6E4D44;
+        color: #6E4D44;
+      }
+
+    </style>
+    <iris-shared-entities id="shared" namespace="services"></iris-shared-entities>
+
+    <paper-dialog id="dialog" entry-animation="slide-from-left-animation" exit-animation="slide-left-animation">
+      <div class='dialog-head'>
+        <paper-fab mini icon="chevron-left" elevation="0" on-click="close"></paper-fab>
+      </div>
+      <iris-table id="workstation-table" fixed-header fields-model="[[fields_to_show]]" data="[[pack]]"></iris-table>
+
+    </paper-dialog>
+  </template>
+  <script>
+    Polymer({
+      is: 'pack-dialog',
+      properties: {
+        pack: {
+          type: Array
+        }
+      },
+      ready() {
+        this.fields_to_show = [
+          {
+            field: 'label',
+            label: 'Номер',
+            sortable: true
+          }, {
+            label: 'Дополнительные поля',
+            template: "ticket-fields"
+          }, {
+            field: 'service',
+            label: 'Услуга',
+            sortable: true,
+            transform: (service) => {
+              let service_id = service;
+              return this.$.shared.get(service_id).label;
+            }
+          }, {
+            field: 'service_count',
+            sortable: true,
+            label: 'Количество дел'
+          }
+        ];
+        this.$.dialog.sizingTarget = app;
+
+      },
+      resizeDialog() {
+        this.debounce('resize', () => {
+          this.$.dialog.notifyResize();
+        }, 300);
+      },
+      open() {
+        app.scrollPageToTop();
+        this.$.dialog.open();
+      },
+      close() {
+        this.$.dialog.close();
+      }
+    });
+  </script>
+</dom-module>
